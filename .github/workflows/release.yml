@@ -1,0 +1,43 @@
+name: Build Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.2
+          tools: composer:v2
+
+      - name: Install dependencies
+        run: |
+          composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs
+
+      - name: Build tar.gz package
+        run: |
+          pkg_name="mpay-flvx-${{ github.ref_name }}"
+          mkdir -p release
+          tar czf "release/${pkg_name}.tar.gz" \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='.travis.yml' \
+            --exclude='.gitignore' \
+            --exclude='.env' \
+            --exclude='runtime' \
+            --exclude='*.zip' \
+            --exclude='README_old.md' \
+            --exclude='node_modules' \
+            .
+
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/mpay-flvx-*.tar.gz
+          generate_release_notes: true

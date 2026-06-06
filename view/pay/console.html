@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>收银台</title>
+    <link rel="stylesheet" href="/component/pear/css/pear.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            padding: 24px 16px;
+        }
+
+        /* 支付宝风格头部 */
+        body.alipay {
+            background: linear-gradient(135deg, #1677ff 0%, #0056b3 100%);
+        }
+
+        /* 微信风格头部 */
+        body.wxpay {
+            background: linear-gradient(135deg, #07c160 0%, #059048 100%);
+        }
+
+        .container {
+            max-width: 420px;
+            margin: 0 auto;
+        }
+
+        /* 页面入场动画 */
+        @keyframes slideUpFade {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            padding: 20px 0 24px;
+            animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .header img {
+            /* 保持高度自适应，顺应长条原图 */
+            height: 44px; 
+            width: auto;
+            max-width: 100%;
+            
+            /* 核心修改：给这个白底图片加上圆角和阴影，变成一个精致的徽标卡片 */
+            border-radius: 10px; 
+            background-color: #fff; /* 确保边缘过度自然 */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* 增加悬浮感，去掉狗皮膏药感 */
+            
+            /* 防止图片边缘本身有留白不均匀，强行裁剪到圆角内 */
+            overflow: hidden; 
+        }
+
+        .header h2 {
+            color: #fff;
+            font-size: 18px;
+            margin-top: 14px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            margin-bottom: 16px;
+            opacity: 0;
+            animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .card:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+
+        .card:nth-child(3) {
+            animation-delay: 0.2s;
+        }
+
+        .card-body {
+            padding: 24px 20px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px dashed #f0f0f0; 
+            font-size: 14px;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        
+        .info-row:first-child {
+            padding-top: 0;
+        }
+
+        .info-label {
+            color: #888;
+        }
+
+        .info-value {
+            color: #333;
+            font-weight: 500;
+            text-align: right;
+            word-break: break-all;
+            padding-left: 16px;
+        }
+
+        .amount-section {
+            text-align: center;
+            padding: 16px 0 20px;
+        }
+
+        .amount-label {
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .amount {
+            font-size: 46px;
+            font-weight: 700;
+            color: #1f1f1f;
+            line-height: 1;
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .amount span.currency {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .amount span.unit {
+            font-size: 16px;
+            font-weight: 500;
+            color: #666;
+            margin-left: 2px;
+        }
+
+        .qrcode-section {
+            text-align: center;
+            padding: 8px 0 24px;
+        }
+
+        .qrcode-box {
+            display: inline-block;
+            padding: 16px;
+            border-radius: 16px;
+            background: #fff;
+            border: 1px solid #f0f0f0;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+            transition: transform 0.3s ease;
+        }
+
+        .qrcode-box img {
+            width: 210px;
+            height: 210px;
+            display: block;
+            border-radius: 8px;
+        }
+
+        .tips {
+            padding: 0 20px 12px;
+            text-align: center;
+        }
+
+        .tip-main {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+
+        .tip-highlight {
+            color: #ff4d4f;
+            font-weight: 600;
+            padding: 0 4px;
+        }
+
+        .countdown {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #fff7e6;
+            border: 1px solid #ffd591;
+            color: #fa8c16;
+            font-size: 13px;
+            padding: 8px 16px;
+            border-radius: 24px;
+            margin-top: 12px;
+            font-weight: 500;
+        }
+
+        .countdown .time {
+            font-weight: 700;
+            font-size: 15px;
+            font-variant-numeric: tabular-nums; 
+        }
+
+        .footer-tip {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 13px;
+            margin-top: 24px;
+            padding-bottom: 20px;
+            opacity: 0;
+            animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards;
+        }
+
+        /* 手机端唤起按钮 */
+        .action-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+            text-align: center;
+            cursor: pointer;
+            margin-top: 16px;
+            margin-bottom: 24px;
+            text-decoration: none;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+        }
+
+        .action-btn.alipay {
+            background: linear-gradient(135deg, #1677ff, #0056b3);
+            box-shadow: 0 6px 16px rgba(22, 119, 255, 0.25);
+        }
+
+        .action-btn.wxpay {
+            background: linear-gradient(135deg, #07c160, #059048);
+            box-shadow: 0 6px 16px rgba(7, 193, 96, 0.25);
+        }
+
+        .action-btn:active {
+            transform: scale(0.98);
+            opacity: 0.9;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <img id="payTypeIcon" src="" alt="支付方式">
+            <h2 id="headerTitle">收银台</h2>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <div class="info-row">
+                    <!-- <span class="info-label">商户订单号</span> -->
+                    <span class="info-value" id="order">
+                        商户订单号：<?php echo htmlentities($out_trade_no); ?>
+                    </span>
+                </div>
+                <div class="info-row">
+                    <!-- <span class="info-label">商品名称</span> -->
+                    <span class="info-value">
+                        商品の名称：<?php echo htmlentities($name); ?>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body" style="padding-bottom: 16px;">
+                <div class="amount-section">
+                    <div class="amount-label">支付金额</div>
+                    <div class="amount">
+                        <span class="currency">¥</span>
+                        <?php echo htmlentities($really_price); ?>
+                        <span class="unit">元</span>
+                    </div>
+                </div>
+
+                <div class="qrcode-section">
+                    <div class="qrcode-box">
+                        <img id="qrcode" src="/static/img/loading.gif" alt="支付二维码">
+                    </div>
+                </div>
+
+                <div id="appBtnWrap" style="display: none; padding: 0 4px;">
+                    <a id="openApp" class="action-btn" href="#">打开支付应用</a>
+                </div>
+
+                <div class="tips">
+                    <p class="tip-main">请使用 <span class="tip-highlight" id="payTypeText">扫码</span> 完成支付</p>
+                    <p class="tip-main" style="font-size: 13px; color: #999;">付款后页面将自动检测支付结果</p>
+                    <div class="countdown" id="countdownWrap">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M12 6v6l4 2" />
+                        </svg>
+                        <span>剩余 <span class="time" id="divTime">3分00秒</span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <p class="footer-tip">支付完成后请勿关闭页面，系统将自动跳转</p>
+    </div>
+
+    <script src="/component/layui/layui.js"></script>
+    <script src="/static/js/awesome-qr.min.js"></script>
+    <script>
+        function detectBrowserEnvironment() {
+            const userAgent = navigator.userAgent.toLowerCase();
+            let environment = 'other';
+            if (userAgent.includes('micromessenger')) {
+                if (userAgent.includes('miniprogram')) {
+                    environment = 'wxapp';
+                } else if (userAgent.includes('android') || userAgent.includes('iphone') || userAgent.includes('ipad')) {
+                    environment = 'wxphone';
+                } else {
+                    environment = 'wxpc';
+                }
+            } else if (userAgent.includes('aliapp') || userAgent.includes('alipayclient')) {
+                if (userAgent.includes('android') || userAgent.includes('iphone') || userAgent.includes('ipad')) {
+                    environment = 'aliphone';
+                } else {
+                    environment = 'alipc';
+                }
+            } else if (userAgent.includes('android') || userAgent.includes('iphone') || userAgent.includes('ipad')) {
+                if (!userAgent.includes('micromessenger') && !userAgent.includes('aliapp') && !userAgent.includes('qq')) {
+                    environment = 'phone';
+                }
+            } else {
+                environment = 'pc';
+            }
+            return environment;
+        }
+
+        const payCode = '<?php echo $payUrl; ?>';
+        const codeType = '<?php echo htmlentities($code_type); ?>';
+        const payType = '<?php echo htmlentities($type); ?>';
+        const order = '<?php echo htmlentities($order_id); ?>';
+        const QR = AwesomeQR.AwesomeQR;
+
+        (async () => {
+            // 设置品牌头部
+            const payTypeIcon = document.getElementById('payTypeIcon');
+            const headerTitle = document.getElementById('headerTitle');
+            const payTypeText = document.getElementById('payTypeText');
+            const body = document.body;
+
+            if (payType === 'wxpay') {
+                payTypeIcon.src = '/static/img/weixin.jpg';
+                payTypeText.innerText = '微信';
+                headerTitle.innerText = '微信支付';
+                body.classList.add('wxpay');
+            } else if (payType === 'alipay') {
+                payTypeIcon.src = '/static/img/alipay.jpg';
+                payTypeText.innerText = '支付宝';
+                headerTitle.innerText = '支付宝支付';
+                body.classList.add('alipay');
+            } else if (payType === 'unionpay') {
+                payTypeIcon.src = '/static/img/unionpay.jpg';
+                payTypeText.innerText = '云闪付';
+                headerTitle.innerText = '云闪付支付';
+            }
+
+            // 生成二维码
+            if (codeType == 0) {
+                document.getElementById('qrcode').src = await getQrcode(payCode, QR);
+            } else {
+                document.getElementById('qrcode').src = payCode;
+            }
+
+            // 订单状态查询
+            let orderTimer = 0;
+            const queryOrder = async (url) => {
+                if (orderTimer) clearTimeout(orderTimer);
+                const res = await fetch(url);
+                const jsonData = await res.json();
+                orderTimer = setTimeout(() => { queryOrder(url); }, 1500);
+
+                if (jsonData.state === 1) {
+                    clearTimeout(orderTimer);
+                    layer.closeAll();
+                    document.getElementById('countdownWrap').style.background = '#f6ffed';
+                    document.getElementById('countdownWrap').style.borderColor = '#b7eb8f';
+                    document.getElementById('countdownWrap').innerHTML = '<span style="color:#52c41a;font-weight:600;display:flex;align-items:center;gap:4px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> 支付成功</span>';
+                    document.getElementById('qrcode').src = '/static/img/pay_ok.png';
+                    setTimeout(() => {
+                        location.href = jsonData.return_url;
+                    }, 1500);
+                }
+
+                timer(jsonData.passtime);
+            };
+            queryOrder(`/getOrderState/${order}`);
+        })();
+
+        // 验证支付结果（单次监听模式）
+        /* <?php if ($patt == 0 && $passtime > 0) { ?> */
+        const id = '<?php echo htmlentities($id);?>';
+        const reVali = (step) => {
+            setTimeout(() => {
+                layer.confirm('是否已完成支付？', { icon: 3, title: '提示', closeBtn: 0 },
+                    (index) => {
+                        (async () => {
+                            const res = await validatePayResult(id, 1);
+                            if (res) reVali(8000);
+                        })();
+                        layer.close(index);
+                    },
+                    (index) => {
+                        reVali(5000);
+                        layer.close(index);
+                    }
+                );
+            }, step);
+        };
+        reVali(10000);
+
+        async function validatePayResult(id, patt) {
+            const lay = layer.load(2);
+            let data = { id: id, patt: patt };
+            const res1 = await fetch(`/validatePayResult`, {
+                method: 'post',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const rec1_info = await res1.json();
+            const info = await new Promise((resolve) => {
+                setTimeout(() => {
+                    data.patt = 0;
+                    fetch(`/validatePayResult`, { method: 'post', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
+                        .then((res2) => res2.json())
+                        .then((rec2_info) => {
+                            if (rec2_info.code == 0) {
+                                layer.close(lay);
+                                layer.msg('验证失败，稍后重新验证！');
+                                resolve(true);
+                            } else {
+                                layer.close(lay);
+                                layer.msg(rec2_info.msg);
+                                resolve(false);
+                            }
+                        });
+                }, 5000);
+            });
+            return info;
+        }
+        /* <?php } ?> */
+
+        // 环境判断与唤起按钮
+        const environment = detectBrowserEnvironment();
+        if (payType === 'wxpay' && environment === 'aliphone') {
+            layer.alert('请使用微信打开此页面');
+        } else if (payType === 'alipay' && environment === 'wxphone') {
+            layer.alert('请使用支付宝打开此页面');
+        }
+
+        const openAppBtn = document.getElementById('openApp');
+        if (environment === 'phone') {
+            document.getElementById('appBtnWrap').style.display = 'block';
+            if (payType === 'wxpay') {
+                openAppBtn.innerText = '打开微信支付';
+                openAppBtn.classList.add('wxpay');
+                openAppBtn.href = 'weixin://';
+            } else if (payType === 'alipay') {
+                openAppBtn.innerText = '打开支付宝付款';
+                openAppBtn.classList.add('alipay');
+                if (codeType == 0) {
+                    openAppBtn.href = 'alipays://platformapi/startapp?appId=20000067&&url=' + encodeURIComponent(payCode);
+                } else {
+                    openAppBtn.href = 'alipays://platformapi/startapp?appId=20000067&&url=' + encodeURIComponent(window.location.href);
+                }
+            }
+        }
+
+        async function getQrcode(text, QR) {
+            return await new Promise((resolve) => {
+                new QR({ text: text, size: 500 }).draw().then((dataURL) => resolve(dataURL));
+            });
+        }
+
+        function timer(passtime) {
+            let minute = 0, second = 0;
+            if (passtime > 0) {
+                minute = Math.floor(passtime / 60);
+                second = Math.floor(passtime) - (minute * 60);
+            }
+            if (passtime <= 0) {
+                document.getElementById('countdownWrap').style.background = '#fff1f0';
+                document.getElementById('countdownWrap').style.borderColor = '#ffa39e';
+                document.getElementById('countdownWrap').innerHTML = '<span style="color:#ff4d4f;font-weight:600;">订单已过期</span>';
+                document.getElementById('qrcode').src = '/static/img/qrcode_timeout.png';
+            } else {
+                document.getElementById('divTime').innerText = `${minute}分${second < 10 ? '0' : ''}${second}秒`;
+            }
+        }
+    </script>
+</body>
+
+</html>
