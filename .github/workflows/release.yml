@@ -43,4 +43,3 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: release/mpay-flvx-*.tar.gz
-          generate_release_notes: true
