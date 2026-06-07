@@ -30,13 +30,11 @@ jobs:
           tar czf "release/${pkg_name}.tar.gz" \
             --exclude='.git' \
             --exclude='.github' \
-            --exclude='.travis.yml' \
-            --exclude='.gitignore' \
-            --exclude='.env' \
-            --exclude='runtime' \
-            --exclude='*.zip' \
-            --exclude='README_old.md' \
-            --exclude='node_modules' \
+            --exclude='.gitattributes' \
+            --exclude='.env.example' \
+            --exclude='mpay1.2.4bb' \
+            --exclude='wepay-1.8.0.0.apk' \
+            --exclude='wxmonitor_v1.4.zip' \
             .
 
       - name: Upload Release Asset
