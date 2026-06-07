@@ -1,0 +1,4 @@
+<?php
+//000000036000
+ exit();?>
+a:2:{i:0;a:3:{s:2:"id";i:1;s:5:"title";s:12:"应用更新";s:8:"children";a:2:{i:0;a:6:{s:2:"id";i:11;s:6:"avatar";s:21:"/static/img/logo2.png";s:5:"title";s:39:"支付宝账单插件上新，免挂机";s:7:"context";s:9:"内容。";s:4:"form";s:12:"技术老胡";s:4:"time";s:6:"刚刚";}i:1;a:6:{s:2:"id";i:12;s:6:"avatar";s:21:"/static/img/logo2.png";s:5:"title";s:35:"微信PC监听工具已开发完成";s:7:"context";s:9:"内容。";s:4:"form";s:12:"技术老胡";s:4:"time";s:6:"刚刚";}}}i:1;a:3:{s:2:"id";i:2;s:5:"title";s:12:"官方消息";s:8:"children";a:1:{i:0;a:6:{s:2:"id";i:11;s:6:"avatar";s:67:"https://gw.alipayobjects.com/zos/rmsportal/ThXAXghbEsBCCSDihZxY.png";s:5:"title";s:32:"V2版本正在开发，表催！";s:7:"context";s:9:"内容。";s:4:"form";s:12:"技术老胡";s:4:"time";s:6:"刚刚";}}}}

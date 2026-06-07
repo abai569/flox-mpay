@@ -1,12 +1,8 @@
 .vscode
 *.env
 
-extend/*
-
 vendor/*
 !vendor/vendor.zip
-
-runtime/*
 
 app/controller/TestController.php
 
