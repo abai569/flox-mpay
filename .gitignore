@@ -1,5 +1,4 @@
 .vscode
-*.env
 
 vendor/*
 !vendor/vendor.zip
