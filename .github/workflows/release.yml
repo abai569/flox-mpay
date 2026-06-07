@@ -26,8 +26,7 @@ jobs:
       - name: Build tar.gz package
         run: |
           pkg_name="mpay-flvx-${{ github.ref_name }}"
-          mkdir -p release
-          tar czf "../${pkg_name}.tar.gz" \
+          tar czf "/tmp/${pkg_name}.tar.gz" \
             --exclude='.git' \
             --exclude='.github' \
             --exclude='.gitattributes' \
@@ -35,8 +34,10 @@ jobs:
             --exclude='mpay1.2.4bb' \
             --exclude='wepay-1.8.0.0.apk' \
             --exclude='wxmonitor_v1.4.zip' \
+            --exclude='release' \
             .
-          mv "../${pkg_name}.tar.gz" release/
+          mkdir -p release
+          mv "/tmp/${pkg_name}.tar.gz" release/
 
       - name: Upload Release Asset
         env:
