@@ -6,6 +6,7 @@ node_modules
 runtime/cache
 runtime/log
 runtime/session
+runtime/install.lock
 *.tar.gz
 *.apk
 *.zip
