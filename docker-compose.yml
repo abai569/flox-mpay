@@ -1,22 +1,60 @@
 version: "3.8"
 
 services:
+  mysql:
+    image: mysql:8.0
+    container_name: mpay-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123}
+      MYSQL_DATABASE: ${DB_NAME:-mpay}
+      MYSQL_USER: ${DB_USER:-mpay}
+      MYSQL_PASSWORD: ${DB_PASS:-mpay123}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   mpay:
     build: .
     container_name: mpay-app
     restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
     environment:
       APP_DEBUG: ${APP_DEBUG:-false}
-      DB_TYPE: sqlite
-      DB_NAME: database/mpay.db
+      DB_HOST: mysql
+      DB_NAME: ${DB_NAME:-mpay}
+      DB_USER: ${DB_USER:-mpay}
+      DB_PASS: ${DB_PASS:-mpay123}
+      DB_PORT: "3306"
       DB_PREFIX: ${DB_PREFIX:-mpay_}
       DEFAULT_LANG: ${DEFAULT_LANG:-zh-cn}
     ports:
-      - "${MPAY_PORT:-8088}:80"
+      - "${MPAY_PORT:-8080}:80"
     volumes:
-      - mpay_data:/var/www/html/database
       - mpay_runtime:/var/www/html/runtime
 
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: mpay-phpmyadmin
+    restart: unless-stopped
+    depends_on:
+      - mysql
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      UPLOAD_LIMIT: 100M
+    ports:
+      - "${PHPMYADMIN_PORT:-8081}:80"
+
 volumes:
-  mpay_data:
+  mysql_data:
   mpay_runtime:

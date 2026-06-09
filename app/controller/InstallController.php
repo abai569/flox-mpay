@@ -115,10 +115,6 @@ class InstallController
             return 'Fileinfo 扩展未安装';
         }
 
-        if (!extension_loaded('pdo_sqlite')) {
-            return 'PDO_SQLite 扩展未安装';
-        }
-
         return true;
     }
 
@@ -131,7 +127,11 @@ class InstallController
     {
         $validate = new Validate();
         $rule = [
+            'host' => 'require',
             'name' => 'require',
+            'user' => 'require',
+            'pass' => 'require',
+            'port' => 'require|integer',
         ];
         if (!$validate->rule($rule)->check($dbConfig)) {
             throw new ValidateException($validate->getError());
@@ -180,8 +180,12 @@ class InstallController
         return <<<EOT
 APP_DEBUG = false
 
-DB_TYPE = sqlite
+DB_TYPE = mysql
+DB_HOST = {$dbConfig['host']}
 DB_NAME = {$dbConfig['name']}
+DB_USER = {$dbConfig['user']}
+DB_PASS = {$dbConfig['pass']}
+DB_PORT = {$dbConfig['port']}
 DB_PREFIX = mpay_
 
 DEFAULT_LANG = zh-cn
@@ -206,14 +210,6 @@ EOT;
                 throw new \Exception("创建 $tableName 表失败: " . $e->getMessage());
             }
         }
-
-        foreach ($this->getIndexCreationSqls() as $sql) {
-            try {
-                $db->execute($sql);
-            } catch (\Exception $e) {
-                Log::error("创建索引失败: " . $e->getMessage());
-            }
-        }
     }
 
     /**
@@ -224,70 +220,68 @@ EOT;
     {
         return [
             'mpay_order' => "CREATE TABLE `mpay_order` (
-                `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-                `pid` INTEGER NOT NULL DEFAULT 0,
-                `order_id` TEXT NOT NULL DEFAULT '',
-                `type` TEXT NOT NULL DEFAULT '',
-                `out_trade_no` TEXT NOT NULL DEFAULT '',
-                `notify_url` TEXT NOT NULL DEFAULT '',
-                `return_url` TEXT NOT NULL DEFAULT '',
-                `name` TEXT NOT NULL DEFAULT '',
-                `really_price` REAL NOT NULL DEFAULT 0.00,
-                `money` REAL NOT NULL DEFAULT 0.00,
-                `clientip` TEXT NOT NULL DEFAULT '',
-                `device` TEXT NOT NULL DEFAULT '',
-                `param` TEXT NOT NULL DEFAULT '',
-                `state` INTEGER NOT NULL DEFAULT 0,
-                `patt` INTEGER NOT NULL DEFAULT 0,
-                `create_time` TEXT DEFAULT (datetime('now','localtime')),
-                `close_time` TEXT DEFAULT NULL,
-                `pay_time` TEXT DEFAULT NULL,
-                `platform` TEXT NOT NULL DEFAULT '',
-                `platform_order` TEXT NOT NULL DEFAULT '',
-                `aid` INTEGER NOT NULL DEFAULT 0,
-                `cid` INTEGER NOT NULL DEFAULT 0,
-                `delete_time` TEXT DEFAULT NULL
-            );",
+                `id` int(11) NOT NULL AUTO_INCREMENT,
+                `pid` int(11) NOT NULL DEFAULT 0,
+                `order_id` varchar(255) NOT NULL DEFAULT '',
+                `type` varchar(255) NOT NULL DEFAULT '',
+                `out_trade_no` varchar(255) NOT NULL DEFAULT '',
+                `notify_url` varchar(512) NOT NULL DEFAULT '',
+                `return_url` varchar(512) NOT NULL DEFAULT '',
+                `name` varchar(255) NOT NULL DEFAULT '',
+                `really_price` decimal(10, 2) NOT NULL DEFAULT 0.00,
+                `money` decimal(10, 2) NOT NULL DEFAULT 0.00,
+                `clientip` varchar(255) NOT NULL DEFAULT '',
+                `device` varchar(255) NOT NULL DEFAULT '',
+                `param` varchar(720) NOT NULL DEFAULT '',
+                `state` tinyint(4) NOT NULL DEFAULT 0,
+                `patt` tinyint(4) NOT NULL DEFAULT 0,
+                `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
+                `close_time` datetime DEFAULT NULL,
+                `pay_time` datetime DEFAULT NULL,
+                `platform` varchar(15) NOT NULL DEFAULT '',
+                `platform_order` varchar(255) NOT NULL DEFAULT '',
+                `aid` int(11) NOT NULL DEFAULT 0,
+                `cid` int(11) NOT NULL DEFAULT 0,
+                `delete_time` datetime DEFAULT NULL,
+                PRIMARY KEY (`id`),
+                INDEX `idx_order_id` (`order_id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;",
             'mpay_pay_account' => "CREATE TABLE `mpay_pay_account` (
-                `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-                `pid` INTEGER NOT NULL DEFAULT 0,
-                `platform` TEXT NOT NULL DEFAULT '',
-                `account` TEXT NOT NULL DEFAULT '',
-                `password` TEXT NOT NULL DEFAULT '',
-                `state` INTEGER NOT NULL DEFAULT 1,
-                `pattern` INTEGER NOT NULL DEFAULT 1,
-                `params` TEXT NOT NULL,
-                `delete_time` TEXT DEFAULT NULL
-            );",
+                `id` int(11) NOT NULL AUTO_INCREMENT,
+                `pid` int(11) NOT NULL DEFAULT 0,
+                `platform` varchar(255) NOT NULL DEFAULT '',
+                `account` varchar(255) NOT NULL DEFAULT '',
+                `password` varchar(255) NOT NULL DEFAULT '',
+                `state` tinyint(4) NOT NULL DEFAULT 1,
+                `pattern` tinyint(4) NOT NULL DEFAULT 1,
+                `params` text NOT NULL,
+                `delete_time` datetime DEFAULT NULL,
+                PRIMARY KEY (`id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;",
             'mpay_pay_channel' => "CREATE TABLE `mpay_pay_channel` (
-                `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-                `account_id` INTEGER NOT NULL DEFAULT 0,
-                `channel` TEXT NOT NULL DEFAULT '',
-                `type` INTEGER NOT NULL DEFAULT 0,
-                `qrcode` TEXT NOT NULL DEFAULT '',
-                `last_time` TEXT DEFAULT (datetime('now','localtime')),
-                `state` INTEGER NOT NULL DEFAULT 1,
-                `delete_time` TEXT DEFAULT NULL
-            );",
+                `id` int(11) NOT NULL AUTO_INCREMENT,
+                `account_id` int(11) NOT NULL DEFAULT 0,
+                `channel` varchar(255) NOT NULL DEFAULT '',
+                `type` tinyint(4) NOT NULL DEFAULT 0,
+                `qrcode` varchar(512) NOT NULL DEFAULT '',
+                `last_time` datetime DEFAULT CURRENT_TIMESTAMP,
+                `state` tinyint(4) NOT NULL DEFAULT 1,
+                `delete_time` datetime DEFAULT NULL,
+                PRIMARY KEY (`id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;",
             'mpay_user' => "CREATE TABLE `mpay_user` (
-                `id` INTEGER PRIMARY KEY AUTOINCREMENT,
-                `pid` INTEGER NOT NULL DEFAULT 0,
-                `secret_key` TEXT NOT NULL DEFAULT '',
-                `nickname` TEXT NOT NULL DEFAULT '',
-                `username` TEXT NOT NULL DEFAULT '',
-                `password` TEXT NOT NULL DEFAULT '',
-                `state` INTEGER NOT NULL DEFAULT 1,
-                `role` INTEGER NOT NULL DEFAULT 0,
-                `create_time` TEXT DEFAULT (datetime('now','localtime')),
-                `delete_time` TEXT DEFAULT NULL
-            );",
-        ];
-    }
-
-    private function getIndexCreationSqls(): array
-    {
-        return [
-            "CREATE INDEX IF NOT EXISTS `idx_order_id` ON `mpay_order` (`order_id`);",
+                `id` int(11) NOT NULL AUTO_INCREMENT,
+                `pid` int(11) NOT NULL DEFAULT 0,
+                `secret_key` varchar(255) NOT NULL DEFAULT '',
+                `nickname` varchar(255) NOT NULL DEFAULT '',
+                `username` varchar(255) NOT NULL DEFAULT '',
+                `password` varchar(255) NOT NULL DEFAULT '',
+                `state` tinyint(4) NOT NULL DEFAULT 1,
+                `role` tinyint(4) NOT NULL DEFAULT 0,
+                `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
+                `delete_time` datetime DEFAULT NULL,
+                PRIMARY KEY (`id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;",
         ];
     }
 
