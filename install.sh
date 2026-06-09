@@ -4,9 +4,9 @@ set -e
 export LANG=en_US.UTF-8
 export LC_ALL=C
 
-REPO="abai569/mpay-flvx"
+REPO="abai569/flox-mpay"
 INSTALL_DIR="/opt/mpay"
-IMAGE="ghcr.io/abai569/mpay-flvx:latest"
+IMAGE="ghcr.io/abai569/flox-mpay:latest"
 DEFAULT_MPAY_PORT=8088
 
 install_download_tools() {
