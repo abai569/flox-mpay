@@ -188,7 +188,7 @@ services:
     environment:
       APP_DEBUG: false
       DB_TYPE: sqlite
-      DB_NAME: database/mpay.db
+      DB_NAME: /var/www/html/database/mpay.db
       DB_PREFIX: mpay_
       DEFAULT_LANG: zh-cn
     ports:

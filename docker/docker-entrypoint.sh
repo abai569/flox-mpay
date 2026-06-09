@@ -6,7 +6,7 @@ if [ ! -f /var/www/html/.env ]; then
 APP_DEBUG = ${APP_DEBUG:-false}
 
 DB_TYPE = ${DB_TYPE:-sqlite}
-DB_NAME = ${DB_NAME:-database/mpay.db}
+DB_NAME = ${DB_NAME:-/var/www/html/database/mpay.db}
 DB_PREFIX = ${DB_PREFIX:-mpay_}
 
 DEFAULT_LANG = ${DEFAULT_LANG:-zh-cn}
