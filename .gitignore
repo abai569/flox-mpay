@@ -3,10 +3,9 @@
 
 extend/*
 
-vendor/*
-!vendor/vendor.zip
-
-runtime/*
+runtime/cache/
+runtime/log/
+runtime/session/
 
 app/controller/TestController.php
 

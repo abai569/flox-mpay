@@ -3,6 +3,8 @@ Dockerfile export-ignore
 docker-compose.yml export-ignore
 docker/ export-ignore
 install.sh export-ignore
-.dockerignore export-ignore
+.gitattributes export-ignore
+.gitignore export-ignore
+.htaccess export-ignore
 wepay*.apk export-ignore
 wxmonitor*.zip export-ignore

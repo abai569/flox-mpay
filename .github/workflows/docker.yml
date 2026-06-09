@@ -1,4 +1,4 @@
-name: Docker Build & Release
+name: Build Docker Image
 
 on:
   push:
@@ -6,41 +6,6 @@ on:
       - '*.*.*'
 
 jobs:
-  release:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: 8.2
-          extensions: pdo_sqlite, mbstring, gd, zip, bcmath
-
-      - name: Install Composer dependencies
-        run: |
-          composer install --no-dev --no-interaction --optimize-autoloader
-          composer clear-cache
-
-      - name: Create archive
-        run: |
-          TAG=${GITHUB_REF_NAME#v}
-          git archive --format=tar --prefix="mpay-flvxbb${TAG}/" HEAD | gzip > "mpay-flvxbb${TAG}.tar.gz"
-          echo "ASSET=mpay-flvxbb${TAG}.tar.gz" >> $GITHUB_ENV
-          echo "RELEASE_NAME=mpay-flvx v${GITHUB_REF_NAME}" >> $GITHUB_ENV
-          echo "RELEASE_BODY<<RELEASE_BODY_EOF" >> $GITHUB_ENV
-          echo "宝塔安装" >> $GITHUB_ENV
-          echo "下载 mpay-flvx-v${GITHUB_REF_NAME}.tar.gz 解压到网站目录，配置 Nginx 指向 public/ 目录，域名/install安装即可。" >> $GITHUB_ENV
-          echo "详细安装教程请参考原项目：https://gitee.com/technical-laohu/mpay/tree/master" >> $GITHUB_ENV
-          echo "RELEASE_BODY_EOF" >> $GITHUB_ENV
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
-        with:
-          name: ${{ env.RELEASE_NAME }}
-          body: ${{ env.RELEASE_BODY }}
-          files: ${{ env.ASSET }}
-
   docker:
     runs-on: ubuntu-latest
     steps:
