@@ -5,9 +5,8 @@
  * 自动创建表、插入默认管理员、生成 install.lock
  */
 
-header('Content-Type: text/plain; charset=utf-8');
-
-$dbPath = __DIR__ . '/../database/mpay.db';
+$dbPath = '/var/www/html/database/mpay.db';
+$rootPath = '/var/www/html';
 
 if (file_exists($dbPath)) {
     echo "[INFO] SQLite 数据库已存在，跳过自动初始化\n";
@@ -94,11 +93,13 @@ try {
     }
 
     // 生成 9 位随机密码 (6随机+1数字+1大写+1小写, 打乱)
-    $rand = str_split(bin2hex(random_bytes(3)));
+    $hex = bin2hex(random_bytes(4));
     $num = (string)rand(0, 9);
     $upper = chr(rand(65, 90));
     $lower = chr(rand(97, 122));
-    $password = str_shuffle($rand[0] . $rand[1] . $rand[2] . $num . $upper . $lower . $rand[3] . $rand[4] . $rand[5]);
+    $chars = str_split($hex . $num . $upper . $lower);
+    shuffle($chars);
+    $password = implode(array_slice($chars, 0, 9));
 
     $secretKey = md5(1000 . time() . mt_rand());
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
@@ -117,8 +118,8 @@ try {
     @chmod($dbPath, 0666);
 
     // 生成 install.lock
-    $lockPath = __DIR__ . '/../runtime/install.lock';
-    $runtimeDir = dirname($lockPath);
+    $lockPath = $rootPath . '/runtime/install.lock';
+    $runtimeDir = $rootPath . '/runtime';
     if (!is_dir($runtimeDir)) {
         mkdir($runtimeDir, 0777, true);
     }
@@ -129,12 +130,13 @@ try {
     // 打印登录信息
     $publicIp = getenv('PUBLIC_IP') ?: trim(@shell_exec('curl -fsSL --max-time 3 https://ifconfig.me 2>/dev/null') ?: @shell_exec('curl -fsSL --max-time 3 https://ip.sb 2>/dev/null') ?: '服务器IP');
     $mpayPort = getenv('MPAY_PORT') ?: '8088';
+    $scheme = getenv('HTTPS') ? 'https' : 'http';
 
     echo "\n";
     echo "===============================================\n";
     echo "   [OK] mpay 自动初始化完成\n";
     echo "===============================================\n";
-    echo "   访问地址：http://{$publicIp}:{$mpayPort}\n";
+    echo "   访问地址：{$scheme}://{$publicIp}:{$mpayPort}\n";
     echo "   用户名：admin\n";
     echo "   密码：{$password}\n";
     echo "   [WARN] 首次登录后请修改默认密码！\n";

@@ -14,10 +14,13 @@ RUN set -eux; \
         libzip-dev \
         libxml2-dev \
         libcurl4-openssl-dev \
+        libsqlite3-dev \
+        curl \
         ; \
     docker-php-ext-configure gd --with-freetype --with-jpeg; \
     docker-php-ext-install -j$(nproc) \
         pdo_mysql \
+        pdo_sqlite \
         mbstring \
         gd \
         zip \
