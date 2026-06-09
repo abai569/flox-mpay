@@ -36,10 +36,15 @@ if [ "$_DB_TYPE" = "sqlite" ] && [ ! -f /var/www/html/database/mpay.db ]; then
     fi
 fi
 
+# 确保 runtime 子目录存在（mkdir 必须在 chown 之前，否则新建目录仍是 root 拥有）
+mkdir -p /var/www/html/runtime/session
+mkdir -p /var/www/html/runtime/log
+mkdir -p /var/www/html/runtime/cache
+
 # 递归设置 www-data 权限（PHP-FPM 需要写入 runtime 目录）
 chown -R www-data:www-data /var/www/html/runtime
 chown -R www-data:www-data /var/www/html/database
-mkdir -p /var/www/html/runtime/session
+
 php /var/www/html/think clear 2>/dev/null || true
 
 exec "$@"
