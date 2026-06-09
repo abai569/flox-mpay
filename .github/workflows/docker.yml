@@ -25,18 +25,20 @@ jobs:
       - name: Create archive
         run: |
           TAG=${GITHUB_REF_NAME#v}
-          rm -rf .git* .github .travis.yml *.tar.gz *.apk *.zip
-          tar -czf "mpay-flvxbb${TAG}.tar.gz" .
+          git archive --format=tar --prefix="mpay-flvxbb${TAG}/" HEAD | gzip > "mpay-flvxbb${TAG}.tar.gz"
           echo "ASSET=mpay-flvxbb${TAG}.tar.gz" >> $GITHUB_ENV
+          echo "RELEASE_NAME=mpay-flvx v${GITHUB_REF_NAME}" >> $GITHUB_ENV
+          echo "RELEASE_BODY<<RELEASE_BODY_EOF" >> $GITHUB_ENV
+          echo "宝塔安装" >> $GITHUB_ENV
+          echo "下载 mpay-flvx-v${GITHUB_REF_NAME}.tar.gz 解压到网站目录，配置 Nginx 指向 public/ 目录，域名/install安装即可。" >> $GITHUB_ENV
+          echo "详细安装教程请参考原项目：https://gitee.com/technical-laohu/mpay/tree/master" >> $GITHUB_ENV
+          echo "RELEASE_BODY_EOF" >> $GITHUB_ENV
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          name: mpay-flvx ${{ github.ref_name }}
-          body: |
-            宝塔安装
-            下载 mpay-flvx-${{ github.ref_name }}.tar.gz 解压到网站目录，配置 Nginx 指向 public/ 目录，域名/install安装即可。
-            详细安装教程请参考原项目：https://gitee.com/technical-laohu/mpay/tree/master
+          name: ${{ env.RELEASE_NAME }}
+          body: ${{ env.RELEASE_BODY }}
           files: ${{ env.ASSET }}
 
   docker:
