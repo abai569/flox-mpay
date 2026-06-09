@@ -4,6 +4,5 @@ docker-compose.yml export-ignore
 docker/ export-ignore
 install.sh export-ignore
 .dockerignore export-ignore
-database/ export-ignore
 wepay*.apk export-ignore
 wxmonitor*.zip export-ignore
