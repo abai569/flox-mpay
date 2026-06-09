@@ -205,32 +205,62 @@ EOF
   echo "[INFO] 启动 mpay 服务..."
   $DOCKER_CMD up -d
 
-  echo ""
-  echo "[OK] mpay 部署完成！"
-  echo ""
-
   local public_ip=$(get_public_ipv4)
   public_ip=${public_ip:-"服务器IP"}
 
+  echo ""
+  echo "⏳ 等待自动初始化..."
+  local elapsed=0
+  while [ $elapsed -lt 30 ]; do
+    local logs
+    logs=$(docker logs mpay-app 2>&1)
+    if echo "$logs" | grep -q "INIT_DONE"; then
+      break
+    fi
+    if echo "$logs" | grep -q "INIT_ERROR"; then
+      echo "[ERROR] 容器初始化失败"
+      docker logs mpay-app --tail 10
+      break
+    fi
+    sleep 1; elapsed=$((elapsed + 1))
+  done
+
+  local init_passwd=$(docker logs mpay-app 2>&1 | grep "^INIT_PASSWORD=" | tail -1 | cut -d= -f2)
+
+  if [[ -n "$init_passwd" ]]; then
+      echo ""
+      echo "==============================================="
+      echo "   [OK] mpay 部署完成！"
+      echo "==============================================="
+      if [[ -n "$SERVER_DOMAIN" ]]; then
+        echo "   访问地址：https://${SERVER_DOMAIN}"
+      else
+        echo "   访问地址：http://${public_ip}:${MPAY_PORT}"
+      fi
+      echo "   用户名：admin"
+      echo "   密码：${init_passwd}"
+      echo "   [WARN] 安全起见，首次登录后请修改密码！"
+      echo "==============================================="
+  else
+      echo ""
+      echo "==============================================="
+      echo "   [OK] mpay 部署完成！"
+      echo "==============================================="
+      if [[ -n "$SERVER_DOMAIN" ]]; then
+        echo "   访问地址：https://${SERVER_DOMAIN}"
+      else
+        echo "   访问地址：http://${public_ip}:${MPAY_PORT}"
+      fi
+      echo "[INFO] 未检测到自动初始化，请按提示登录或检查日志"
+      docker logs mpay-app --tail 20
+      echo "==============================================="
+  fi
+
   if [[ -n "$SERVER_DOMAIN" ]]; then
-    echo "   访问地址：https://${SERVER_DOMAIN}"
     echo ""
     echo "[INFO] 正在配置域名反代..."
     setup_caddy "$SERVER_DOMAIN" "$MPAY_PORT"
-  else
-    echo "   访问地址：http://${public_ip}:${MPAY_PORT}"
   fi
-
-  echo ""
-  echo "[INFO] 首次访问说明："
-  echo "   1. 打开上述地址进入 Web 安装向导"
-  echo "   2. 数据库路径默认：database/mpay.db"
-  echo "   3. 按提示设置管理员账号和密码"
-  echo ""
-  echo "   安装目录：$INSTALL_DIR"
-  echo "   数据库类型：SQLite（文件自动持久化）"
-  echo "   服务器重启后容器自动启动"
-  echo ""
 }
 
 update_mpay() {
@@ -252,7 +282,27 @@ update_mpay() {
   echo "[INFO] 重启服务..."
   $DOCKER_CMD up -d --force-recreate
 
-  echo "[OK] 更新完成"
+  echo ""
+  echo " 等待服务恢复..."
+  sleep 2
+
+  local logs
+  logs=$(docker logs mpay-app 2>&1)
+  local init_passwd
+  init_passwd=$(echo "$logs" | grep "^INIT_PASSWORD=" | tail -1 | cut -d= -f2)
+
+  if [[ -n "$init_passwd" ]]; then
+      echo ""
+      echo "==============================================="
+      echo "   [OK] mpay 更新完成！"
+      echo "==============================================="
+      echo "   用户名：admin"
+      echo "   密码：${init_passwd}"
+      echo "   [WARN] 安全起见，首次登录后请修改密码！"
+      echo "==============================================="
+  else
+      echo "[OK] 更新完成，请检查服务状态。"
+  fi
 }
 
 uninstall_mpay() {
