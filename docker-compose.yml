@@ -1,0 +1,22 @@
+version: "3.8"
+
+services:
+  mpay:
+    build: .
+    container_name: mpay-app
+    restart: unless-stopped
+    environment:
+      APP_DEBUG: ${APP_DEBUG:-false}
+      DB_TYPE: sqlite
+      DB_NAME: database/mpay.db
+      DB_PREFIX: ${DB_PREFIX:-mpay_}
+      DEFAULT_LANG: ${DEFAULT_LANG:-zh-cn}
+    ports:
+      - "${MPAY_PORT:-8088}:80"
+    volumes:
+      - mpay_data:/var/www/html/database
+      - mpay_runtime:/var/www/html/runtime
+
+volumes:
+  mpay_data:
+  mpay_runtime:

@@ -227,11 +227,11 @@ class PayManageController extends BaseController
             ->join('mpay_order Order', 'PayAccount.id = Order.aid AND Order.delete_time IS NULL AND Order.state = 1', 'LEFT')
             ->field([
                 'PayAccount.*',
-                'SUM(CASE WHEN DATE(Order.pay_time) = CURDATE() THEN Order.really_price ELSE 0 END) as day',
-                'SUM(CASE WHEN DATE(Order.pay_time) = DATE_SUB(CURDATE(), INTERVAL 1 DAY) THEN Order.really_price ELSE 0 END) as yesterday',
-                'SUM(CASE WHEN YEARWEEK(Order.pay_time, 1) = YEARWEEK(CURDATE(), 1) THEN Order.really_price ELSE 0 END) as week',
-                'SUM(CASE WHEN DATE_FORMAT(Order.pay_time, "%Y-%m") = DATE_FORMAT(CURDATE(), "%Y-%m") THEN Order.really_price ELSE 0 END) as month',
-                'SUM(CASE WHEN YEAR(Order.pay_time) = YEAR(CURDATE()) THEN Order.really_price ELSE 0 END) as year',
+                "SUM(CASE WHEN DATE(Order.pay_time) = DATE('now') THEN Order.really_price ELSE 0 END) as day",
+                "SUM(CASE WHEN DATE(Order.pay_time) = DATE('now', '-1 day') THEN Order.really_price ELSE 0 END) as yesterday",
+                "SUM(CASE WHEN strftime('%Y%W', Order.pay_time) = strftime('%Y%W', 'now') THEN Order.really_price ELSE 0 END) as week",
+                "SUM(CASE WHEN strftime('%Y-%m', Order.pay_time) = strftime('%Y-%m', 'now') THEN Order.really_price ELSE 0 END) as month",
+                "SUM(CASE WHEN strftime('%Y', Order.pay_time) = strftime('%Y', 'now') THEN Order.really_price ELSE 0 END) as year",
                 'SUM(IFNULL(Order.really_price, 0)) as total',
                 "SUM(CASE WHEN Order.pay_time BETWEEN '$start_time' AND '$end_time' THEN Order.really_price ELSE 0 END) as income"
             ])

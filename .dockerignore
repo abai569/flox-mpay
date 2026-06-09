@@ -1,0 +1,15 @@
+.git
+.gitignore
+.dockerignore
+vendor
+node_modules
+runtime/cache
+runtime/log
+runtime/session
+*.tar.gz
+*.apk
+*.zip
+assets
+README.md
+README_old.md
+.travis.yml
