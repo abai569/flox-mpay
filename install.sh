@@ -9,8 +9,9 @@ export LC_ALL=C
 # 支持 amd64 / arm64 双架构
 # ============================================
 
-REPO="abai569/mpay"
+REPO="abai569/mpay-flvx"
 INSTALL_DIR="/opt/mpay"
+IMAGE="ghcr.io/abai569/mpay-flvx:latest"
 DEFAULT_MPAY_PORT=8088
 
 # ============================================
@@ -210,16 +211,14 @@ show_menu() {
 # ============================================
 
 install_mpay() {
-  echo "🚀 开始安装 mpay..."
+  echo " 开始安装 mpay..."
 
-  # 创建安装目录
-  echo "📁 创建安装目录：$INSTALL_DIR"
+  echo " 创建安装目录：$INSTALL_DIR"
   $SUDO_CMD mkdir -p "$INSTALL_DIR"
   cd "$INSTALL_DIR"
 
   check_docker
 
-  # 配置参数
   echo ""
   echo "🔧 请输入配置参数："
   read -p "访问端口（默认 $DEFAULT_MPAY_PORT）: " MPAY_PORT
@@ -228,47 +227,23 @@ install_mpay() {
   read -p "是否使用域名反代？(y/N): " use_proxy
   if [[ "$use_proxy" == "y" || "$use_proxy" == "Y" ]]; then
     read -p "请输入域名（例如 pay.example.com）: " SERVER_DOMAIN
-    while [[ -z "$SERVER_DOMAIN" ]]; do
+    while [[ -z "$SERVER_DOMAIN" ]]; then
       echo "❌ 域名不能为空，请重新输入"
       read -p "请输入域名: " SERVER_DOMAIN
     done
     SERVER_DOMAIN=$(echo "$SERVER_DOMAIN" | sed -e 's|^https\?://||' -e 's|/.*||')
   fi
 
-  # 生成随机密码
-  ADMIN_PASSWORD=$(generate_random)
-
   echo ""
-  echo "🔽 下载 mpay 源码..."
-  if [[ -d "$INSTALL_DIR/source" ]]; then
-    cd "$INSTALL_DIR/source"
-    git pull
-  else
-    git clone https://github.com/${REPO}.git "$INSTALL_DIR/source"
-  fi
+  echo "️ 拉取 Docker 镜像..."
+  $DOCKER_CMD pull "$IMAGE"
 
-  cd "$INSTALL_DIR/source"
-
-  # 生成 .env
-  cat > .env <<EOF
-APP_DEBUG = false
-
-DB_TYPE = sqlite
-DB_NAME = database/mpay.db
-DB_PREFIX = mpay_
-
-DEFAULT_LANG = zh-cn
-
-MPAY_PORT=${MPAY_PORT}
-EOF
-
-  # 生成 docker-compose.yml
   cat > docker-compose.yml <<EOF
 version: "3.8"
 
 services:
   mpay:
-    build: .
+    image: $IMAGE
     container_name: mpay-app
     restart: unless-stopped
     environment:
@@ -288,10 +263,7 @@ volumes:
   mpay_runtime:
 EOF
 
-  echo "🔨 构建 Docker 镜像（首次构建约 5-10 分钟）..."
-  $DOCKER_CMD build -t mpay-app .
-
-  echo "🚀 启动 mpay 服务..."
+  echo " 启动 mpay 服务..."
   $DOCKER_CMD up -d
 
   echo ""
@@ -304,7 +276,7 @@ EOF
   if [[ -n "$SERVER_DOMAIN" ]]; then
     echo "   访问地址：https://${SERVER_DOMAIN}"
     echo ""
-    echo "🔄 正在配置域名反代..."
+    echo " 正在配置域名反代..."
     setup_caddy "$SERVER_DOMAIN" "$MPAY_PORT"
   else
     echo "   访问地址：http://${public_ip}:${MPAY_PORT}"
@@ -316,7 +288,7 @@ EOF
   echo "   2. 数据库路径默认：database/mpay.db"
   echo "   3. 设置管理员账号和密码"
   echo ""
-  echo "📁 安装目录：$INSTALL_DIR/source"
+  echo "📁 安装目录：$INSTALL_DIR"
   echo "🔑 数据库类型：SQLite（文件自动持久化）"
   echo "⚠️  服务器重启后容器自动启动"
   echo ""
@@ -329,24 +301,20 @@ EOF
 update_mpay() {
   echo "🔄 开始更新 mpay..."
 
-  if [[ ! -d "$INSTALL_DIR/source" ]]; then
-    echo "❌ 未检测到 mpay 安装（$INSTALL_DIR/source 不存在），请先安装"
+  if [[ ! -d "$INSTALL_DIR" ]]; then
+    echo "❌ 未检测到 mpay 安装（$INSTALL_DIR 不存在），请先安装"
     return 1
   fi
 
-  cd "$INSTALL_DIR/source"
+  cd "$INSTALL_DIR"
   check_docker
 
   # 备份数据
   backup_data
 
-  # 拉取最新源码
-  echo "🔽 拉取最新源码..."
-  git pull
-
-  # 重新构建
-  echo "🔨 重新构建 Docker 镜像..."
-  $DOCKER_CMD build -t mpay-app .
+  # 拉取最新镜像
+  echo "️ 拉取最新 Docker 镜像..."
+  $DOCKER_CMD pull "$IMAGE"
 
   # 重启
   echo "🚀 重启服务..."
@@ -355,19 +323,15 @@ update_mpay() {
   echo "✅ 更新完成"
 }
 
-# ============================================
-# 卸载
-# ============================================
-
 uninstall_mpay() {
   local non_interactive="${1:-false}"
 
-  if [[ ! -d "$INSTALL_DIR/source" ]]; then
-    echo "❌ 未检测到 mpay 安装（$INSTALL_DIR/source 不存在）"
+  if [[ ! -d "$INSTALL_DIR" ]]; then
+    echo "❌ 未检测到 mpay 安装（$INSTALL_DIR 不存在）"
     return 1
   fi
 
-  cd "$INSTALL_DIR/source"
+  cd "$INSTALL_DIR"
   check_docker
 
   if [[ "$non_interactive" != "true" ]]; then
@@ -378,30 +342,26 @@ uninstall_mpay() {
     fi
   fi
 
-  echo "🛑 停止并删除容器..."
+  echo " 停止并删除容器..."
   $DOCKER_CMD down --rmi all --volumes --remove-orphans
 
-  echo "🗑️  删除安装目录..."
+  echo "️  删除安装目录..."
   rm -rf "$INSTALL_DIR"
 
   echo "✅ 卸载完成"
 }
 
-# ============================================
-# 备份
-# ============================================
-
 backup_data() {
   local backup_dir timestamp
 
-  echo "📦 开始备份 mpay 数据..."
+  echo " 开始备份 mpay 数据..."
 
-  if [[ ! -d "$INSTALL_DIR/source" ]]; then
-    echo "❌ 未检测到 mpay 安装（$INSTALL_DIR/source 不存在）"
+  if [[ ! -d "$INSTALL_DIR" ]]; then
+    echo "❌ 未检测到 mpay 安装（$INSTALL_DIR 不存在）"
     return 1
   fi
 
-  cd "$INSTALL_DIR/source"
+  cd "$INSTALL_DIR"
   check_docker
 
   timestamp=$(date +"%Y%m%d_%H%M%S")
@@ -411,16 +371,17 @@ backup_data() {
   # 备份 .env
   if [[ -f ".env" ]]; then
     cp .env "$backup_dir/.env"
-    echo "  .env → 已备份"
+    echo "  .env 已备份"
   fi
 
   # 备份 SQLite 数据库
   echo "📦 备份 SQLite 数据库..."
   if docker ps --format "{{.Names}}" | grep -q "^mpay-app$"; then
-    docker cp mpay-app:/var/www/html/database/mpay.db "$backup_dir/mpay.db" 2>/dev/null && echo "  mpay.db → 已备份" || echo "  ⚠️  数据库文件备份失败"
+    docker cp mpay-app:/var/www/html/database/mpay.db "$backup_dir/mpay.db" 2>/dev/null && echo "  mpay.db 已备份" || echo "  数据库文件备份失败"
   else
     # 从 volume 中备份
-    docker run --rm -v mpay_data:/data -v "$backup_dir":/backup alpine sh -c "cp /data/mpay.db /backup/mpay.db 2>/dev/null" && echo "  mpay.db → 已从卷备份"
+    docker run --rm -v mpay_data:/data -v "$backup_dir":/backup alpine sh -c "cp /data/mpay.db /backup/mpay.db 2>/dev/null" && echo "  mpay.db 已从卷备份"
+  fi
   fi
 
   local backup_size
@@ -442,8 +403,8 @@ backup_data() {
 restore_data() {
   echo "📥 开始恢复 mpay 数据..."
 
-  if [[ ! -d "$INSTALL_DIR/source" ]]; then
-    echo "❌ 未检测到 mpay 安装（$INSTALL_DIR/source 不存在）"
+  if [[ ! -d "$INSTALL_DIR" ]]; then
+    echo "❌ 未检测到 mpay 安装（$INSTALL_DIR 不存在）"
     return 1
   fi
 
@@ -487,7 +448,7 @@ restore_data() {
     return 0
   fi
 
-  cd "$INSTALL_DIR/source"
+  cd "$INSTALL_DIR"
   check_docker
 
   # 停止服务
@@ -505,7 +466,7 @@ restore_data() {
   if [[ -f "$backup_dir/.env" ]]; then
     read -p "是否同时恢复 .env 配置文件？(Y/n): " restore_env
     if [[ "$restore_env" != "n" && "$restore_env" != "N" ]]; then
-      cp "$backup_dir/.env" "$INSTALL_DIR/source/.env"
+      cp "$backup_dir/.env" "$INSTALL_DIR/.env"
       echo "  .env → 已恢复"
     fi
   fi

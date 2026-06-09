@@ -50,11 +50,11 @@ bash <(curl -L https://raw.githubusercontent.com/abai569/mpay-flvx/main/install.
 docker pull ghcr.io/abai569/mpay-flvx:latest
 ```
 
-### 手动 docker-compose 部署
+### 手动 Docker 部署
 
 ```bash
-git clone https://github.com/abai569/mpay-flvx.git
-cd mpay-flvx
+mkdir -p mpay && cd mpay
+curl -fsSL https://raw.githubusercontent.com/abai569/mpay-flvx/main/docker-compose.yml -o docker-compose.yml
 docker compose up -d
 ```
 
