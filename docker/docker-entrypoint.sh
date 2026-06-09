@@ -36,4 +36,10 @@ if [ "$_DB_TYPE" = "sqlite" ] && [ ! -f /var/www/html/database/mpay.db ]; then
     fi
 fi
 
+# 递归设置 www-data 权限（PHP-FPM 需要写入 runtime 目录）
+chown -R www-data:www-data /var/www/html/runtime
+chown -R www-data:www-data /var/www/html/database
+mkdir -p /var/www/html/runtime/session
+php /var/www/html/think clear 2>/dev/null || true
+
 exec "$@"
