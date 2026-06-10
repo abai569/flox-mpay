@@ -13,7 +13,9 @@ class ConsoleController extends BaseController
     // 后台主页
     public function index()
     {
-        View::assign('version', 'V1');
+        $verFile = app()->getRootPath() . 'VERSION';
+        $version = file_exists($verFile) ? trim(file_get_contents($verFile)) : 'V1-0.0.0';
+        View::assign('version', $version);
         return View::fetch();
     }
     // 管理菜单
