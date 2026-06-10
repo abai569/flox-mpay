@@ -19,7 +19,7 @@ class ConsoleController extends BaseController
     // 管理菜单
     public function menu()
     {
-        $menu = include config_path('extend/menu.php');
+        $menu = include app()->getConfigPath() . 'extend/menu.php';
         return json($menu);
     }
     // 管理菜单
