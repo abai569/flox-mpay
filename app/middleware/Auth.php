@@ -20,7 +20,7 @@ class Auth
         if ($islogin) {
             return $next($request);
         } else {
-            $method = $request->isJson();
+            $method = $request->isAjax();
             if ($method) {
                 return \json(\backMsg(404, '身份过期，请重新登陆'));
             }

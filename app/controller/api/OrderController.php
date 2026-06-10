@@ -14,7 +14,9 @@ class OrderController extends BaseController
     public function getOrders()
     {
         $query = $this->request->get();
-        $orders = Order::serchOrders($query)->order('id', 'desc')->paginate(['list_rows' => $query['limit'], 'page' => $query['page']]);
+        $limit = $query['limit'] ?? 10;
+        $page = $query['page'] ?? 1;
+        $orders = Order::serchOrders($query)->order('id', 'desc')->paginate(['list_rows' => $limit, 'page' => $page]);
         if ($orders) {
             return json(['code' => 0, 'msg' => 'OK', 'count' => $orders->total(), 'data' => $orders->items()]);
         } else {
