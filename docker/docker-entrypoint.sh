@@ -15,6 +15,9 @@ EOF
     chown www-data:www-data /var/www/html/.env
 fi
 
+# 确保 database 目录存在
+mkdir -p /var/www/html/database
+
 # 规范化 DB_TYPE（去掉首尾空格）
 _DB_TYPE=$(echo "${DB_TYPE:-sqlite}" | tr -d '[:space:]')
 

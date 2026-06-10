@@ -55,4 +55,10 @@ class UserController extends BaseController
         View::assign($userinfo);
         return View::fetch();
     }
+    // 管理菜单
+    public function menu()
+    {
+        $menu = \think\facade\Config::load("extend/menu", 'extend');
+        return json($menu);
+    }
 }

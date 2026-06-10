@@ -44,7 +44,7 @@ COPY docker/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh \
     && chown -R www-data:www-data /var/www/html \
-    && chmod -R 777 /var/www/html/runtime
+    && chmod -R 755 /var/www/html/runtime
 
 EXPOSE 80
 

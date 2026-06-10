@@ -14,3 +14,4 @@ assets
 README.md
 README_old.md
 .travis.yml
+database/*.db

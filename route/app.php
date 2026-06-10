@@ -22,7 +22,7 @@ Route::rule('mpayNotify', 'Pay/mpayNotify');
 Route::rule('validatePayResult', 'Pay/validatePayResult');
 
 // API多级控制器
-Route::rule('api/:controller/:methon', 'api.:controller/:methon');
+Route::rule('api/:controller/:method', 'api.:controller/:method');
 
 // 开发文档
 Route::rule('doc', 'Index/doc');

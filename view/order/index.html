@@ -370,16 +370,21 @@
 				});
 			}
 			async function httpJSON(url, info) {
-				const res = await fetch(url, { method: 'post', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(info) });
-				if (res.status !== 200) {
-					layer.msg('请求失败，请重试！', { tips: 2, time: 1200 });
+				try {
+					const res = await fetch(url, { method: 'post', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(info) });
+					if (res.status !== 200) {
+						layer.msg('请求失败，请重试！', { tips: 2, time: 1200 });
+						return false;
+					}
+					const rec_info = await res.json();
+					if (rec_info.code === 0) {
+						layer.msg(rec_info.msg, { icon: 1, time: 1200 }, () => { table.reload('orders-table') });
+					} else {
+						layer.msg(rec_info.msg, { icon: 2, time: 1200 });
+					}
+				} catch (e) {
+					layer.msg('请求异常，错误提示：' + e.message, { icon: 2, time: 2000 });
 					return false;
-				}
-				const rec_info = await res.json();
-				if (rec_info.code === 0) {
-					layer.msg(rec_info.msg, { icon: 1, time: 1200 }, () => { table.reload('orders-table') });
-				} else {
-					layer.msg(rec_info.msg, { icon: 2, time: 1200 });
 				}
 			}
 		})
