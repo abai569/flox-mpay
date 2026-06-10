@@ -58,7 +58,7 @@ class UserController extends BaseController
     // 管理菜单
     public function menu()
     {
-        $menu = \think\facade\Config::load("extend/menu", 'extend');
+        $menu = config('extend.menu');
         return json($menu);
     }
 }

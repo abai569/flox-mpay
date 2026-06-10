@@ -19,8 +19,7 @@ class ConsoleController extends BaseController
     // 管理菜单
     public function menu()
     {
-        // 加载菜单配置
-        $menu = \think\facade\Config::load("extend/menu", 'extend');
+        $menu = config('extend.menu');
         return json($menu);
     }
     // 管理菜单
