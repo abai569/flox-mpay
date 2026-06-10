@@ -11,3 +11,4 @@ runtime/*
 app/controller/TestController.php
 
 config/extend/*
+!config/extend/menu.php
