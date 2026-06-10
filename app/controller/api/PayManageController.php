@@ -17,7 +17,9 @@ class PayManageController extends BaseController
     public function getPayAccount()
     {
         $query = $this->request->get();
-        $accounts = PayAccount::serchAccount($query)->order('id', 'desc')->paginate(['list_rows' => $query['limit'], 'page' => $query['page']]);
+        $limit = $query['limit'] ?? 10;
+        $page = $query['page'] ?? 1;
+        $accounts = PayAccount::serchAccount($query)->order('id', 'desc')->paginate(['list_rows' => $limit, 'page' => $page]);
         if ($accounts) {
             return json(['code' => 0, 'msg' => 'OK', 'count' => $accounts->total(), 'data' => $accounts->items()]);
         } else {
@@ -218,22 +220,30 @@ class PayManageController extends BaseController
         $page = $query['page'] ?? 1;
         $start_time = $query['time_start'] ?? date('Y-m-d H:i:s', strtotime('today'));
         $end_time = $query['time_end'] ?? date('Y-m-d H:i:s', strtotime('tomorrow') - 1);
-        // 确保日期时间格式正确
         $start_time = date('Y-m-d H:i:s', strtotime($start_time));
         $end_time = date('Y-m-d H:i:s', strtotime($end_time));
+
+        $today = date('Y-m-d');
+        $yesterday = date('Y-m-d', strtotime('-1 day'));
+        $week_start = date('Y-m-d', strtotime('monday this week'));
+        $week_end = date('Y-m-d', strtotime('sunday this week'));
+        $month_start = date('Y-m-01');
+        $month_end = date('Y-m-t');
+        $year_start = date('Y-01-01');
+        $year_end = date('Y-12-31');
 
         $accounts = Db::table('mpay_pay_account', 'PayAccount')
             ->alias('PayAccount')
             ->join('mpay_order Order', 'PayAccount.id = Order.aid AND Order.delete_time IS NULL AND Order.state = 1', 'LEFT')
             ->field([
                 'PayAccount.*',
-                'SUM(CASE WHEN DATE(Order.pay_time) = CURDATE() THEN Order.really_price ELSE 0 END) as day',
-                'SUM(CASE WHEN DATE(Order.pay_time) = DATE_SUB(CURDATE(), INTERVAL 1 DAY) THEN Order.really_price ELSE 0 END) as yesterday',
-                'SUM(CASE WHEN YEARWEEK(Order.pay_time, 1) = YEARWEEK(CURDATE(), 1) THEN Order.really_price ELSE 0 END) as week',
-                'SUM(CASE WHEN DATE_FORMAT(Order.pay_time, "%Y-%m") = DATE_FORMAT(CURDATE(), "%Y-%m") THEN Order.really_price ELSE 0 END) as month',
-                'SUM(CASE WHEN YEAR(Order.pay_time) = YEAR(CURDATE()) THEN Order.really_price ELSE 0 END) as year',
-                'SUM(IFNULL(Order.really_price, 0)) as total',
-                "SUM(CASE WHEN Order.pay_time BETWEEN '$start_time' AND '$end_time' THEN Order.really_price ELSE 0 END) as income"
+                "SUM(CASE WHEN date(Order.pay_time) = '{$today}' THEN Order.really_price ELSE 0 END) as day",
+                "SUM(CASE WHEN date(Order.pay_time) = '{$yesterday}' THEN Order.really_price ELSE 0 END) as yesterday",
+                "SUM(CASE WHEN date(Order.pay_time) BETWEEN '{$week_start}' AND '{$week_end}' THEN Order.really_price ELSE 0 END) as week",
+                "SUM(CASE WHEN date(Order.pay_time) BETWEEN '{$month_start}' AND '{$month_end}' THEN Order.really_price ELSE 0 END) as month",
+                "SUM(CASE WHEN date(Order.pay_time) BETWEEN '{$year_start}' AND '{$year_end}' THEN Order.really_price ELSE 0 END) as year",
+                'SUM(COALESCE(Order.really_price, 0)) as total',
+                "SUM(CASE WHEN Order.pay_time BETWEEN '{$start_time}' AND '{$end_time}' THEN Order.really_price ELSE 0 END) as income"
             ])
             ->where('PayAccount.delete_time IS NULL')
             ->group('PayAccount.id')

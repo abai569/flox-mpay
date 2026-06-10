@@ -83,7 +83,7 @@ class PayAccount extends BaseModel
     {
         $payplugin_path = config_path() . '/extend/payplugin.php';
         if (!file_exists($payplugin_path)) {
-            return [];
+            return $value;
         }
         // 加载插件配置
         $payplugin_config = require $payplugin_path;
