@@ -45,7 +45,7 @@ class PayManageController extends BaseController
         $account = PayAccount::find($aid);
         $platform = $account->getData('platform');
         View::assign(['aid' => $aid, 'platform' => $platform, 'account' => $account->account]);
-        if ($platform == 'wxpay' || $platform == 'alipay') {
+        if ($platform == 'wxpay' || $platform == 'alipay' || $platform == 'alibill') {
             return View::fetch('add_channel_code');
         }
         return View::fetch();

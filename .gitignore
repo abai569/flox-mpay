@@ -2,6 +2,8 @@
 *.env
 
 extend/*
+!extend/alipay/
+!extend/payclient/
 
 vendor/*
 !vendor/vendor.zip
@@ -12,3 +14,4 @@ app/controller/TestController.php
 
 config/extend/*
 !config/extend/menu.php
+!config/extend/payplugin.php

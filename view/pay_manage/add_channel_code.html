@@ -38,6 +38,9 @@
                             <option value="alipay1">收钱码</option>
                             <option value="alipay2">经营码</option>
                             <!-- <?php } ?> -->
+                            <!-- <?php if ($platform == 'alibill') { ?> -->
+                            <option value="alibill1">账单模式</option>
+                            <!-- <?php } ?> -->
                         </select>
                     </div>
                 </div>
@@ -67,6 +70,10 @@
                         <!-- <?php if ($platform == 'alipay') { ?> -->
                         <p><strong>手机监控：</strong>支付宝收钱码与经营码通知无法做区分，只能二选一，且只能通过收钱码选项添加</p>
                         <p><strong>电脑监控：</strong>暂不支持PC端监控，可以选择支付宝账单方式监听收款</p>
+                        <!-- <?php } ?> -->
+                        <!-- <?php if ($platform == 'alibill') { ?> -->
+                        <p><strong>账单模式：</strong>通过支付宝开放平台账单API监听收款，无需手机挂机。请先配置 config/alipay.php 填入应用参数。</p>
+                        <p><strong>配置要求：</strong>需要在支付宝开放平台创建应用，获取 app_id、应用私钥、支付宝公钥，并开通账单查询权限。</p>
                         <!-- <?php } ?> -->
                     </blockquote>
                 </div>
