@@ -83,6 +83,14 @@ return [
                 'openType' => '_iframe',
                 'href'     => '/Plugin/index',
             ],
+            [
+                'id'       => 42,
+                'title'    => '支付宝配置',
+                'icon'     => 'layui-icon layui-icon-set',
+                'type'     => 1,
+                'openType' => '_iframe',
+                'href'     => '/AlipayConfig/index',
+            ],
         ],
     ],
     [
