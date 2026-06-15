@@ -8,12 +8,13 @@ class AlipayConfig
 {
     private static function getDb()
     {
-        return \think\facade\Db::getConnection();
+        return \think\facade\Db::connect();
     }
 
     private static function getTable(): string
     {
-        $prefix = self::getDb()->getConfig('prefix');
+        $default = (string)config('database.default');
+        $prefix = (string)config('database.connections.' . $default . '.prefix');
         return $prefix . 'alipay_config';
     }
 
