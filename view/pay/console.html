@@ -539,7 +539,7 @@
                     }
                 }
             }
-        } else if (payType === 'alipay') {
+        } else if (payType === 'alipay' && alipayAppUrl) {
             document.getElementById('appBtnWrap').style.display = 'block';
             openAppBtn.style.display = 'none';
             checkStateBtn.style.display = 'block';
