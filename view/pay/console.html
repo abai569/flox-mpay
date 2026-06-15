@@ -365,6 +365,7 @@
         const codeType = '<?php echo htmlentities($code_type); ?>';
         const payType = '<?php echo htmlentities($type); ?>';
         const order = '<?php echo htmlentities($order_id); ?>';
+        const alipayAppUrl = '<?php echo $alipayAppUrl ?? ""; ?>';
         const QR = AwesomeQR.AwesomeQR;
 
         (async () => {
@@ -491,12 +492,17 @@
                 openAppBtn.classList.add('wxpay');
                 openAppBtn.href = 'weixin://';
             } else if (payType === 'alipay') {
-                openAppBtn.innerText = '打开支付宝付款';
                 openAppBtn.classList.add('alipay');
-                if (codeType == 0) {
-                    openAppBtn.href = 'alipays://platformapi/startapp?appId=20000067&&url=' + encodeURIComponent(payCode);
+                if (alipayAppUrl) {
+                    openAppBtn.innerText = '打开支付宝App支付';
+                    openAppBtn.href = alipayAppUrl;
                 } else {
-                    openAppBtn.href = 'alipays://platformapi/startapp?appId=20000067&&url=' + encodeURIComponent(window.location.href);
+                    openAppBtn.innerText = '打开支付宝付款';
+                    if (codeType == 0) {
+                        openAppBtn.href = 'alipays://platformapi/startapp?appId=20000067&&url=' + encodeURIComponent(payCode);
+                    } else {
+                        openAppBtn.href = 'alipays://platformapi/startapp?appId=20000067&&url=' + encodeURIComponent(window.location.href);
+                    }
                 }
             }
         }

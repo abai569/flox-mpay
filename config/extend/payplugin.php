@@ -4,6 +4,28 @@
 // +----------------------------------------------------------------------
 return [
     [
+        'platform'   => 'wxpay',
+        'name'       => '微信',
+        'class_name' => 'WxPay',
+        'price'      => 0,
+        'describe'   => '微信支付',
+        'website'    => '',
+        'helplink'   => '',
+        'version'    => '1.0.0',
+        'state'      => 1,
+    ],
+    [
+        'platform'   => 'alipay',
+        'name'       => '支付宝',
+        'class_name' => 'AliPay',
+        'price'      => 0,
+        'describe'   => '支付宝支付',
+        'website'    => '',
+        'helplink'   => '',
+        'version'    => '1.0.0',
+        'state'      => 1,
+    ],
+    [
         'platform'   => 'alibill',
         'name'       => '支付宝账单',
         'class_name' => 'AliBill',

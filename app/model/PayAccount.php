@@ -91,7 +91,7 @@ class PayAccount extends BaseModel
         foreach ($payplugin_config as $config) {
             $option[$config['platform']] =  $config['name'];
         }
-        return isset($option[$value]) ? $option[$value] : '[已卸载,请停用]';
+        return isset($option[$value]) ? $option[$value] : '';
     }
     public function getPatternAttr($value)
     {

@@ -121,14 +121,18 @@ class Order extends BaseModel
         foreach ($channel_infos as $key => $value) {
             $check_wx = preg_match('/^wxpay\d+#/i', $value->channel);
             $check_ali = preg_match('/^alipay\d+#/i', $value->channel);
+            $check_alibill = preg_match('/^alibill\d+#/i', $value->channel);
             if ($check_wx && $type === 'wxpay') {
                 $channel_info = $channel_infos[$key];
                 break;
             } elseif ($check_ali && $type === 'alipay') {
                 $channel_info = $channel_infos[$key];
                 break;
+            } elseif ($check_alibill && $type === 'alipay') {
+                $channel_info = $channel_infos[$key];
+                break;
             } else {
-                if ($check_wx || $check_ali) {
+                if ($check_wx || $check_ali || $check_alibill) {
                     continue;
                 }
                 $channel_info = $channel_infos[$key];
