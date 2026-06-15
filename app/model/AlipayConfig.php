@@ -4,56 +4,47 @@ declare(strict_types=1);
 
 namespace app\model;
 
-use think\Model;
-
-class AlipayConfig extends Model
+class AlipayConfig
 {
-    protected $name = 'alipay_config';
-    protected $pk = 'id';
-    protected $autoWriteTimestamp = false;
-
-    private static function ensureTable(): void
+    private static function getConfigPath(): string
     {
-        try {
-            $row = self::find(1);
-            if ($row) return;
-        } catch (\Throwable $e) {
-        }
+        return runtime_path() . 'config' . DIRECTORY_SEPARATOR . 'alipay_config.json';
+    }
 
-        $db = \think\facade\Db::getConnection();
-        $prefix = $db->getConfig('prefix');
-        $table = $prefix . 'alipay_config';
-
-        try {
-            $db->execute("CREATE TABLE IF NOT EXISTS `$table` (
-                id INTEGER PRIMARY KEY,
-                app_id TEXT NOT NULL DEFAULT '',
-                private_key TEXT NOT NULL DEFAULT '',
-                alipay_public_key TEXT NOT NULL DEFAULT '',
-                transfer_user_id TEXT NOT NULL DEFAULT '',
-                query_minutes_back INTEGER NOT NULL DEFAULT 30
-            )");
-            $db->execute("INSERT INTO `$table` (id) VALUES (1)");
-        } catch (\Throwable $e) {
+    private static function ensureDir(): void
+    {
+        $dir = dirname(self::getConfigPath());
+        if (!is_dir($dir)) {
+            mkdir($dir, 0755, true);
         }
     }
 
     public static function getConfig(): array
     {
-        self::ensureTable();
-        try {
-            $row = self::find(1);
-        } catch (\Throwable $e) {
+        $path = self::getConfigPath();
+        if (!file_exists($path)) {
+            return [
+                'app_id'             => '',
+                'private_key'        => '',
+                'alipay_public_key'  => '',
+                'transfer_user_id'   => '',
+                'bill_query'         => [
+                    'query_minutes_back' => 30,
+                    'page_size'        => 200,
+                ],
+            ];
+        }
+        $data = json_decode(file_get_contents($path), true);
+        if (!is_array($data)) {
             return [];
         }
-        if (!$row) return [];
         return [
-            'app_id'             => $row->app_id ?? '',
-            'private_key'        => $row->private_key ?? '',
-            'alipay_public_key'  => $row->alipay_public_key ?? '',
-            'transfer_user_id'   => $row->transfer_user_id ?? '',
+            'app_id'             => $data['app_id'] ?? '',
+            'private_key'        => $data['private_key'] ?? '',
+            'alipay_public_key'  => $data['alipay_public_key'] ?? '',
+            'transfer_user_id'   => $data['transfer_user_id'] ?? '',
             'bill_query'         => [
-                'query_minutes_back' => (int)($row->query_minutes_back ?? 30),
+                'query_minutes_back' => (int)($data['query_minutes_back'] ?? 30),
                 'page_size'        => 200,
             ],
         ];
@@ -61,21 +52,17 @@ class AlipayConfig extends Model
 
     public static function saveConfig(array $data): bool
     {
-        self::ensureTable();
-        try {
-            $row = self::find(1);
-        } catch (\Throwable $e) {
-            return false;
-        }
-        if (!$row) {
-            $row = new self();
-            $row->id = 1;
-        }
-        $row->app_id            = $data['app_id'] ?? '';
-        $row->private_key       = $data['private_key'] ?? '';
-        $row->alipay_public_key = $data['alipay_public_key'] ?? '';
-        $row->transfer_user_id  = $data['transfer_user_id'] ?? '';
-        $row->query_minutes_back = (int)($data['query_minutes_back'] ?? 30);
-        return $row->save();
+        self::ensureDir();
+        $config = [
+            'app_id'             => $data['app_id'] ?? '',
+            'private_key'        => $data['private_key'] ?? '',
+            'alipay_public_key'  => $data['alipay_public_key'] ?? '',
+            'transfer_user_id'   => $data['transfer_user_id'] ?? '',
+            'query_minutes_back' => (int)($data['query_minutes_back'] ?? 30),
+        ];
+        return file_put_contents(
+            self::getConfigPath(),
+            json_encode($config, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT)
+        ) !== false;
     }
 }
