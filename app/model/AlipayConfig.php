@@ -6,20 +6,31 @@ namespace app\model;
 
 class AlipayConfig
 {
-    private static function ensureTable(): void
+    private static function getPdo(): \PDO
+    {
+        $db = \think\facade\Db::getConnection();
+        $pdo = $db->getPdo();
+        $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+        return $pdo;
+    }
+
+    private static function getTable(): string
     {
         $db = \think\facade\Db::getConnection();
         $prefix = $db->getConfig('prefix');
-        $table = $prefix . 'alipay_config';
+        return $prefix . 'alipay_config';
+    }
 
+    private static function ensureTable(\PDO $pdo, string $table): void
+    {
         try {
-            $db->query("SELECT id FROM `$table` LIMIT 1");
+            $pdo->query("SELECT id FROM `$table` LIMIT 1");
             return;
         } catch (\Throwable $e) {
         }
 
         try {
-            $db->execute("CREATE TABLE IF NOT EXISTS `$table` (
+            $pdo->exec("CREATE TABLE IF NOT EXISTS `$table` (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 app_id TEXT NOT NULL DEFAULT '',
                 private_key TEXT NOT NULL DEFAULT '',
@@ -27,7 +38,7 @@ class AlipayConfig
                 transfer_user_id TEXT NOT NULL DEFAULT '',
                 query_minutes_back INTEGER NOT NULL DEFAULT 30
             )");
-            $db->execute("INSERT INTO `$table` (id, app_id, private_key, alipay_public_key, transfer_user_id, query_minutes_back) VALUES (1, '', '', '', '', 30)");
+            $pdo->exec("INSERT INTO `$table` (id) VALUES (1)");
         } catch (\Throwable $e) {
         }
     }
@@ -35,18 +46,11 @@ class AlipayConfig
     public static function getConfig(): array
     {
         try {
-            self::ensureTable();
-        } catch (\Throwable $e) {
-            return self::defaults();
-        }
-
-        $db = \think\facade\Db::getConnection();
-        $prefix = $db->getConfig('prefix');
-        $table = $prefix . 'alipay_config';
-
-        try {
-            $rows = $db->query("SELECT * FROM `$table` WHERE id = 1");
-            $row = $rows[0] ?? null;
+            $pdo = self::getPdo();
+            $table = self::getTable();
+            self::ensureTable($pdo, $table);
+            $stmt = $pdo->query("SELECT * FROM `$table` WHERE id = 1");
+            $row = $stmt->fetch(\PDO::FETCH_ASSOC);
         } catch (\Throwable $e) {
             return self::defaults();
         }
@@ -68,29 +72,18 @@ class AlipayConfig
     public static function saveConfig(array $data): bool
     {
         try {
-            self::ensureTable();
-        } catch (\Throwable $e) {
-            return false;
-        }
+            $pdo = self::getPdo();
+            $table = self::getTable();
+            self::ensureTable($pdo, $table);
 
-        $db = \think\facade\Db::getConnection();
-        $prefix = $db->getConfig('prefix');
-        $table = $prefix . 'alipay_config';
-
-        $params = [
-            'app_id'             => $data['app_id'] ?? '',
-            'private_key'        => $data['private_key'] ?? '',
-            'alipay_public_key'  => $data['alipay_public_key'] ?? '',
-            'transfer_user_id'   => $data['transfer_user_id'] ?? '',
-            'query_minutes_back' => (int)($data['query_minutes_back'] ?? 30),
-        ];
-
-        try {
-            $db->execute(
-                "UPDATE `$table` SET app_id = :app_id, private_key = :private_key, alipay_public_key = :alipay_public_key, transfer_user_id = :transfer_user_id, query_minutes_back = :query_minutes_back WHERE id = 1",
-                $params
-            );
-            return true;
+            $stmt = $pdo->prepare("UPDATE `$table` SET app_id = ?, private_key = ?, alipay_public_key = ?, transfer_user_id = ?, query_minutes_back = ? WHERE id = 1");
+            return $stmt->execute([
+                $data['app_id'] ?? '',
+                $data['private_key'] ?? '',
+                $data['alipay_public_key'] ?? '',
+                $data['transfer_user_id'] ?? '',
+                (int)($data['query_minutes_back'] ?? 30),
+            ]);
         } catch (\Throwable $e) {
             return false;
         }
