@@ -468,19 +468,19 @@ setup_caddy() {
 
   if ! command -v caddy &> /dev/null; then
     echo "[INFO] 未检测到 Caddy，正在安装..."
-    sudo apt-get update
-    sudo apt-get install -y debian-keyring debian-archive-keyring apt-transport-https curl gnupg
-    curl -1sLf 'https://dl.cloudflare.com/cloudflare-main.gpg' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg 2>/dev/null || \
-    curl -1sLf 'https://dl.cloudflare.com/content/v1/e2qwFJ2fRP2b2q/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
-    curl -1sLf 'https://dl.cloudflare.com/content/v1/e2qwFJ2fRP2b2q/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
-    sudo apt-get update
-    sudo apt-get install -y caddy
+    $SUDO_CMD apt-get update
+    $SUDO_CMD apt-get install -y debian-keyring debian-archive-keyring apt-transport-https curl gnupg
+    curl -1sLf 'https://dl.cloudflare.com/cloudflare-main.gpg' | $SUDO_CMD gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg 2>/dev/null || \
+    curl -1sLf 'https://dl.cloudflare.com/content/v1/e2qwFJ2fRP2b2q/stable/gpg.key' | $SUDO_CMD gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+    curl -1sLf 'https://dl.cloudflare.com/content/v1/e2qwFJ2fRP2b2q/stable/debian.deb.txt' | $SUDO_CMD tee /etc/apt/sources.list.d/caddy-stable.list
+    $SUDO_CMD apt-get update
+    $SUDO_CMD apt-get install -y caddy
   else
     echo "[OK] 检测到 Caddy 已安装"
   fi
 
   echo "[INFO] 正在写入 Caddyfile 配置..."
-  sudo tee /etc/caddy/Caddyfile > /dev/null <<CADDY_EOF
+  $SUDO_CMD tee /etc/caddy/Caddyfile > /dev/null <<CADDY_EOF
 ${domain} {
     reverse_proxy http://127.0.0.1:${port} {
         header_up Host {host}
@@ -491,7 +491,7 @@ ${domain} {
 CADDY_EOF
 
   echo "[INFO] 重启 Caddy 服务..."
-  sudo systemctl restart caddy
+  $SUDO_CMD systemctl restart caddy
 
   echo "[OK] Caddy 配置成功！"
   echo "   访问地址：https://$domain"
