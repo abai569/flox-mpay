@@ -174,6 +174,12 @@ install_mpay() {
   fi
 
   echo ""
+  echo "[INFO] 写入环境配置..."
+  cat > .env <<ENVEOF
+MPAY_PORT=${MPAY_PORT}
+ENVEOF
+
+  echo ""
   echo "[INFO] 拉取 Docker 镜像..."
   docker pull "$IMAGE"
 
@@ -502,13 +508,15 @@ configure_caddy_interactive() {
 
   cd "$INSTALL_DIR"
 
-  if [[ ! -f ".env" ]]; then
-    echo "[ERROR] 未找到 .env 文件"
-    return 1
-  fi
+  port=${MPAY_PORT:-$DEFAULT_MPAY_PORT}
 
-  port=$(grep -m1 "^MPAY_PORT=" .env | cut -d= -f2)
-  port=${port:-8088}
+  if [[ -f ".env" ]]; then
+    local env_port
+    env_port=$(grep -m1 "^MPAY_PORT=" .env 2>/dev/null | cut -d= -f2)
+    if [[ -n "$env_port" ]]; then
+      port="$env_port"
+    fi
+  fi
 
   echo "  当前 mpay 端口：$port"
 
