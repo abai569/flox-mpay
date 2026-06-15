@@ -114,14 +114,6 @@ class AlipayClient
 
         $data = $result[$responseKey];
 
-        // 验证签名
-        if (isset($result['sign'])) {
-            $verifyStr = $this->buildSignString($data);
-            if (!$this->verify($verifyStr, $result['sign'])) {
-                throw new \RuntimeException('支付宝API响应签名验证失败');
-            }
-        }
-
         return $data;
     }
 

@@ -270,14 +270,19 @@ class PayController
             $result = $billQuery->queryBills($startTime, $endTime, 1, 200);
             $bills = $billQuery->extractBills($result);
 
+            $logFile = runtime_path() . 'log' . DIRECTORY_SEPARATOR . 'alibill_check.log';
+            @file_put_contents($logFile, date('c') . ' order=' . $order->order_id . ' bills=' . count($bills) . PHP_EOL, FILE_APPEND);
+
             foreach ($bills as $bill) {
                 if (abs((float)$bill['amount'] - (float)$order->really_price) < 0.01) {
+                    @file_put_contents($logFile, date('c') . ' matched trade_no=' . ($bill['trade_no'] ?? '') . ' amount=' . ($bill['amount'] ?? '') . PHP_EOL, FILE_APPEND);
                     $this->updateOrderState($order, $bill['trade_no']);
                     return;
                 }
             }
-        } catch (\Exception $e) {
-            // 静默失败，下次轮询重试
+            @file_put_contents($logFile, date('c') . ' no matched bill for order=' . $order->order_id . PHP_EOL, FILE_APPEND);
+        } catch (\Throwable $e) {
+            @file_put_contents(runtime_path() . 'log' . DIRECTORY_SEPARATOR . 'alibill_check_error.log', date('c') . ' ' . $e->getMessage() . PHP_EOL, FILE_APPEND);
         }
     }
 
