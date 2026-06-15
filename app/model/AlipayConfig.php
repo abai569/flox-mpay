@@ -17,7 +17,7 @@ class AlipayConfig extends Model
         try {
             $row = self::find(1);
             if ($row) return;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
         }
 
         $db = \think\facade\Db::getConnection();
@@ -41,7 +41,11 @@ class AlipayConfig extends Model
     public static function getConfig(): array
     {
         self::ensureTable();
-        $row = self::find(1);
+        try {
+            $row = self::find(1);
+        } catch (\Throwable $e) {
+            return [];
+        }
         if (!$row) return [];
         return [
             'app_id'             => $row->app_id ?? '',
@@ -58,7 +62,11 @@ class AlipayConfig extends Model
     public static function saveConfig(array $data): bool
     {
         self::ensureTable();
-        $row = self::find(1);
+        try {
+            $row = self::find(1);
+        } catch (\Throwable $e) {
+            return false;
+        }
         if (!$row) {
             $row = new self();
             $row->id = 1;
