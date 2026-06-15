@@ -24,7 +24,7 @@ class AlipayConfigController extends BaseController
 
     public function saveConfig()
     {
-        $post = $this->request->post();
+        $post = json_decode($this->request->getContent(), true) ?: $this->request->post();
 
         $result = AlipayConfig::saveConfig([
             'app_id'             => $post['app_id'] ?? '',
