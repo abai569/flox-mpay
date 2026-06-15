@@ -271,7 +271,7 @@ class PayController
             $bills = $billQuery->extractBills($result);
 
             foreach ($bills as $bill) {
-                if ((string)$bill['amount'] === (string)$order->really_price) {
+                if (abs((float)$bill['amount'] - (float)$order->really_price) < 0.01) {
                     $this->updateOrderState($order, $bill['trade_no']);
                     return;
                 }

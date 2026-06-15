@@ -85,7 +85,7 @@
 			const key = `<?php echo $key ?>`;
 			const testdata = {
 				pid: `<?php echo $pid ?>`,
-				notify_url: window.location.origin,
+				notify_url: window.location.origin + '/mpayNotify',
 				return_url: window.location.origin,
 				sign_type: 'MD5'
 			};
