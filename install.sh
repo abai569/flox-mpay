@@ -468,12 +468,55 @@ setup_caddy() {
 
   if ! command -v caddy &> /dev/null; then
     echo "[INFO] 未检测到 Caddy，正在安装..."
-    $SUDO_CMD apt-get update
+    $SUDO_CMD apt-get update -y
     $SUDO_CMD apt-get install -y debian-keyring debian-archive-keyring apt-transport-https curl gnupg
-    curl -1sLf 'https://dl.cloudflare.com/cloudflare-main.gpg' | $SUDO_CMD gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg 2>/dev/null || \
-    curl -1sLf 'https://dl.cloudflare.com/content/v1/e2qwFJ2fRP2b2q/stable/gpg.key' | $SUDO_CMD gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
-    curl -1sLf 'https://dl.cloudflare.com/content/v1/e2qwFJ2fRP2b2q/stable/debian.deb.txt' | $SUDO_CMD tee /etc/apt/sources.list.d/caddy-stable.list
-    $SUDO_CMD apt-get update
+
+    echo "[INFO] 添加 Caddy APT 源..."
+    local gpg_ok=0
+    local caddy_list="/etc/apt/sources.list.d/caddy-stable.list"
+    local keyring_path="/usr/share/keyrings/caddy-stable-archive-keyring.gpg"
+
+    # 尝试方法1：Cloudflare 官方 GPG key
+    if curl -1sLf 'https://dl.cloudflare.com/cloudflare-main.gpg' 2>/dev/null | $SUDO_CMD gpg --dearmor -o "$keyring_path" 2>/dev/null; then
+      if [[ -s "$keyring_path" ]]; then
+        gpg_ok=1
+        echo "[INFO] GPG key 导入成功（cloudflare-main）"
+      fi
+    fi
+
+    # 尝试方法2：备用 GPG key URL
+    if [[ $gpg_ok -eq 0 ]]; then
+      echo "[WARN] 方法1失败，尝试备用方式..."
+      if curl -1sLf 'https://dl.cloudflare.com/caddy-stable.gpg' 2>/dev/null | $SUDO_CMD gpg --dearmor -o "$keyring_path" 2>/dev/null; then
+        if [[ -s "$keyring_path" ]]; then
+          gpg_ok=1
+          echo "[INFO] GPG key 导入成功（cloudflare backup）"
+        fi
+      fi
+    fi
+
+    # 尝试方法3：直接下载 key 文件
+    if [[ $gpg_ok -eq 0 ]]; then
+      echo "[WARN] 方法2失败，尝试直接下载 key..."
+      if curl -fsSL -o /tmp/caddy-key.gpg 'https://dl.cloudflare.com/caddy-stable.gpg' 2>/dev/null; then
+        $SUDO_CMD cp /tmp/caddy-key.gpg "$keyring_path"
+        rm -f /tmp/caddy-key.gpg
+        if [[ -s "$keyring_path" ]]; then
+          gpg_ok=1
+          echo "[INFO] GPG key 导入成功（direct download）"
+        fi
+      fi
+    fi
+
+    # 写入 APT 源
+    if [[ $gpg_ok -eq 1 ]]; then
+      echo "deb [signed-by=$keyring_path] https://dl.cloudflare.com/caddy-stable/debian stable main" | $SUDO_CMD tee "$caddy_list" > /dev/null
+    else
+      echo "[WARN] GPG key 导入失败，尝试不验证签名安装..."
+      echo "deb https://dl.cloudflare.com/caddy-stable/debian stable main" | $SUDO_CMD tee "$caddy_list" > /dev/null
+    fi
+
+    $SUDO_CMD apt-get update -y
     $SUDO_CMD apt-get install -y caddy
   else
     echo "[OK] 检测到 Caddy 已安装"
