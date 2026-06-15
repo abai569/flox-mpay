@@ -8,7 +8,7 @@ class AlipayTransfer
 
     public function __construct(array $config = [])
     {
-        $this->config = $config ?: (file_exists(root_path() . 'config/alipay.php') ? require root_path() . 'config/alipay.php' : []);
+        $this->config = $config ?: \app\model\AlipayConfig::getConfig();
     }
 
     /**

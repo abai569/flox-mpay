@@ -257,6 +257,26 @@
             box-shadow: 0 6px 16px rgba(22, 119, 255, 0.25);
         }
 
+        .action-btn.secondary {
+            background: #f5f5f5;
+            color: #666;
+            border: 1px solid #e6e6e6;
+            box-shadow: none;
+        }
+
+        .action-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+            margin-bottom: 24px;
+        }
+
+        .action-row .action-btn {
+            flex: 1;
+            margin-top: 0;
+            margin-bottom: 0;
+        }
+
         .action-btn.wxpay {
             background: linear-gradient(135deg, #07c160, #059048);
             box-shadow: 0 6px 16px rgba(7, 193, 96, 0.25);
@@ -311,7 +331,10 @@
                 </div>
 
                 <div id="appBtnWrap" style="display: none; padding: 0 4px;">
-                    <a id="openApp" class="action-btn" href="#">打开支付应用</a>
+                    <div class="action-row">
+                        <a id="openApp" class="action-btn" href="#">打开支付应用</a>
+                        <a id="checkStateBtn" class="action-btn secondary" href="#">已支付查询订单状态</a>
+                    </div>
                 </div>
 
                 <div class="tips">
@@ -367,6 +390,28 @@
         const order = '<?php echo htmlentities($order_id); ?>';
         const alipayAppUrl = '<?php echo $alipayAppUrl ?? ""; ?>';
         const QR = AwesomeQR.AwesomeQR;
+        let orderTimer = 0;
+
+        const queryOrder = async (url) => {
+            if (orderTimer) clearTimeout(orderTimer);
+            const res = await fetch(url);
+            const jsonData = await res.json();
+            orderTimer = setTimeout(() => { queryOrder(url); }, 1500);
+
+            if (jsonData.state === 1) {
+                clearTimeout(orderTimer);
+                layer.closeAll();
+                document.getElementById('countdownWrap').style.background = '#f6ffed';
+                document.getElementById('countdownWrap').style.borderColor = '#b7eb8f';
+                document.getElementById('countdownWrap').innerHTML = '<span style="color:#52c41a;font-weight:600;display:flex;align-items:center;gap:4px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> 支付成功</span>';
+                document.getElementById('qrcode').src = '/static/img/pay_ok.png';
+                setTimeout(() => {
+                    location.href = jsonData.return_url;
+                }, 1500);
+            }
+
+            timer(jsonData.passtime);
+        };
 
         (async () => {
             // 设置品牌头部
@@ -399,27 +444,6 @@
             }
 
             // 订单状态查询
-            let orderTimer = 0;
-            const queryOrder = async (url) => {
-                if (orderTimer) clearTimeout(orderTimer);
-                const res = await fetch(url);
-                const jsonData = await res.json();
-                orderTimer = setTimeout(() => { queryOrder(url); }, 1500);
-
-                if (jsonData.state === 1) {
-                    clearTimeout(orderTimer);
-                    layer.closeAll();
-                    document.getElementById('countdownWrap').style.background = '#f6ffed';
-                    document.getElementById('countdownWrap').style.borderColor = '#b7eb8f';
-                    document.getElementById('countdownWrap').innerHTML = '<span style="color:#52c41a;font-weight:600;display:flex;align-items:center;gap:4px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> 支付成功</span>';
-                    document.getElementById('qrcode').src = '/static/img/pay_ok.png';
-                    setTimeout(() => {
-                        location.href = jsonData.return_url;
-                    }, 1500);
-                }
-
-                timer(jsonData.passtime);
-            };
             queryOrder(`/getOrderState/${order}`);
         })();
 
@@ -485,6 +509,15 @@
         }
 
         const openAppBtn = document.getElementById('openApp');
+        const checkStateBtn = document.getElementById('checkStateBtn');
+        const triggerCheck = () => queryOrder(`/getOrderState/${order}`);
+        checkStateBtn.style.display = 'none';
+
+        checkStateBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            triggerCheck();
+        });
+
         if (environment === 'phone') {
             document.getElementById('appBtnWrap').style.display = 'block';
             if (payType === 'wxpay') {
@@ -492,9 +525,10 @@
                 openAppBtn.classList.add('wxpay');
                 openAppBtn.href = 'weixin://';
             } else if (payType === 'alipay') {
+                checkStateBtn.style.display = 'block';
                 openAppBtn.classList.add('alipay');
                 if (alipayAppUrl) {
-                    openAppBtn.innerText = '打开支付宝App支付';
+                    openAppBtn.innerText = '打开支付宝APP付款';
                     openAppBtn.href = alipayAppUrl;
                 } else {
                     openAppBtn.innerText = '打开支付宝付款';
@@ -505,6 +539,11 @@
                     }
                 }
             }
+        } else if (payType === 'alipay') {
+            document.getElementById('appBtnWrap').style.display = 'block';
+            openAppBtn.style.display = 'none';
+            checkStateBtn.style.display = 'block';
+            checkStateBtn.style.flex = '1 1 100%';
         }
 
         async function getQrcode(text, QR) {
