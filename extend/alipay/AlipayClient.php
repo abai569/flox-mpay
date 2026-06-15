@@ -148,7 +148,7 @@ class AlipayClient
 
         $result = json_decode($response, true);
         if (!$result) {
-            throw new \RuntimeException('支付宝API响应解析失败');
+            throw new \RuntimeException('支付宝API响应解析失败: ' . mb_substr(trim((string)$response), 0, 500));
         }
 
         // 获取响应内容

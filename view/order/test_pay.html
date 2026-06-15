@@ -79,7 +79,7 @@
 			const formdata = {
 				name: `支付测试<?php echo date('Ymd-His', time()) ?>`,
 				out_trade_no: `pay<?php echo date('YmdHis', time()).mt_rand(1000,9999) ?>`,
-				money: 1,
+				money: 0.1,
 			}
 			form.val('paytest', formdata);
 			const key = `<?php echo $key ?>`;
