@@ -44,7 +44,7 @@ class AlipayClient
      */
     public function sign(string $data): string
     {
-        $privateKey = $this->formatKey($this->config['private_key'], true);
+        $privateKey = $this->resolvePrivateKey($this->config['private_key']);
         $signature = '';
         openssl_sign($data, $signature, $privateKey, OPENSSL_ALGO_SHA256);
         return base64_encode($signature);
@@ -55,22 +55,67 @@ class AlipayClient
      */
     public function verify(string $data, string $signature): bool
     {
-        $publicKey = $this->formatKey($this->config['alipay_public_key'], false);
+        $publicKey = $this->resolvePublicKey($this->config['alipay_public_key']);
         $result = openssl_verify($data, base64_decode($signature), $publicKey, OPENSSL_ALGO_SHA256);
         return $result === 1;
     }
 
     /**
-     * 格式化密钥（确保PEM格式）
+     * 解析应用私钥
      */
-    private function formatKey(string $key, bool $isPrivate = false): string
+    private function resolvePrivateKey(string $key): string|\OpenSSLAsymmetricKey
     {
-        $key = trim($key);
-        if (strpos($key, '-----') === false) {
-            $type = $isPrivate ? 'PRIVATE' : 'PUBLIC';
-            $key = "-----BEGIN {$type} KEY-----\n" . wordwrap($key, 64, "\n", true) . "\n-----END {$type} KEY-----";
+        $key = $this->normalizeKey($key);
+        $candidates = [$key];
+        $body = $this->extractKeyBody($key);
+        if ($body !== '') {
+            $candidates[] = $this->wrapKey($body, 'PRIVATE');
+            $candidates[] = $this->wrapKey($body, 'RSA PRIVATE');
         }
-        return $key;
+        foreach ($candidates as $candidate) {
+            $res = @openssl_pkey_get_private($candidate);
+            if ($res !== false) {
+                return $res;
+            }
+        }
+        throw new \RuntimeException('支付宝应用私钥格式无效');
+    }
+
+    /**
+     * 解析支付宝公钥
+     */
+    private function resolvePublicKey(string $key): string|\OpenSSLAsymmetricKey
+    {
+        $key = $this->normalizeKey($key);
+        $candidates = [$key];
+        $body = $this->extractKeyBody($key);
+        if ($body !== '') {
+            $candidates[] = $this->wrapKey($body, 'PUBLIC');
+            $candidates[] = $this->wrapKey($body, 'RSA PUBLIC');
+        }
+        foreach ($candidates as $candidate) {
+            $res = @openssl_pkey_get_public($candidate);
+            if ($res !== false) {
+                return $res;
+            }
+        }
+        throw new \RuntimeException('支付宝公钥格式无效');
+    }
+
+    private function normalizeKey(string $key): string
+    {
+        return trim(str_replace(["\r\n", "\r"], "\n", $key));
+    }
+
+    private function extractKeyBody(string $key): string
+    {
+        $key = preg_replace('/-----BEGIN [^-]+-----|-----END [^-]+-----|\s+/', '', $key);
+        return is_string($key) ? trim($key) : '';
+    }
+
+    private function wrapKey(string $body, string $type): string
+    {
+        return "-----BEGIN {$type} KEY-----\n" . wordwrap($body, 64, "\n", true) . "\n-----END {$type} KEY-----";
     }
 
     /**
