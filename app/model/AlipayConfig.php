@@ -71,18 +71,19 @@ class AlipayConfig
         try {
             self::ensureTable();
             $table = self::getTable();
-            self::getDb()->execute(
-                "UPDATE `$table` SET app_id = ?, private_key = ?, alipay_public_key = ?, transfer_user_id = ?, query_minutes_back = ? WHERE id = 1",
-                [
-                    $data['app_id'] ?? '',
-                    $data['private_key'] ?? '',
-                    $data['alipay_public_key'] ?? '',
-                    $data['transfer_user_id'] ?? '',
-                    (int)($data['query_minutes_back'] ?? 30),
-                ]
-            );
+            $db = self::getDb();
+            $sql = "REPLACE INTO `$table` (id, app_id, private_key, alipay_public_key, transfer_user_id, query_minutes_back) VALUES (1, ?, ?, ?, ?, ?)";
+            $db->execute($sql, [
+                $data['app_id'] ?? '',
+                $data['private_key'] ?? '',
+                $data['alipay_public_key'] ?? '',
+                $data['transfer_user_id'] ?? '',
+                (int)($data['query_minutes_back'] ?? 30),
+            ]);
             return true;
         } catch (\Throwable $e) {
+            $logFile = runtime_path() . 'log' . DIRECTORY_SEPARATOR . 'alipay_config_error.log';
+            @file_put_contents($logFile, date('c') . ' ' . $e->getMessage() . PHP_EOL, FILE_APPEND);
             return false;
         }
     }
