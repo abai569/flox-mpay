@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace app\controller;
 
 use app\BaseController;
+use app\model\AlipayConfig;
 use think\facade\View;
 
 class AlipayConfigController extends BaseController
 {
     public function index()
     {
-        $configPath = root_path() . 'config/alipay.php';
-        $config = file_exists($configPath) ? require $configPath : [];
+        $config = AlipayConfig::getConfig();
 
         View::assign([
             'app_id'            => $config['app_id'] ?? '',

@@ -13,11 +13,14 @@ class AlipayClient
 
     private function loadConfig(): array
     {
-        $configPath = root_path() . 'config/alipay.php';
-        if (!file_exists($configPath)) {
-            throw new \RuntimeException('支付宝配置文件不存在: ' . $configPath);
+        $config = \app\model\AlipayConfig::getConfig();
+        if (empty($config['app_id'])) {
+            throw new \RuntimeException('支付宝配置未设置，请先在后台"支付宝配置"页面填写');
         }
-        return require $configPath;
+        $config['server_url'] = 'https://openapi.alipay.com';
+        $config['sign_type'] = 'RSA2';
+        $config['charset'] = 'UTF-8';
+        return $config;
     }
 
     public function getConfig(): array

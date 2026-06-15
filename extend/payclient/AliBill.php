@@ -28,7 +28,7 @@ class AliBill
     {
         try {
             if (!$this->client->validateConfig()) {
-                return ['code' => 1, 'msg' => '支付宝配置不完整，请检查 config/alipay.php'];
+                return ['code' => 1, 'msg' => '支付宝配置不完整，请先在后台"支付宝配置"页面填写'];
             }
 
             $config = $this->client->getConfig();

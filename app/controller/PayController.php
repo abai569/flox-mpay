@@ -108,6 +108,14 @@ class PayController
         if ($order_id) {
             $act_order = Order::where('order_id', $order_id)->find();
             if ($act_order) {
+                // 支付宝账单模式自动查单（无需cron）
+                if ($act_order->state === 0) {
+                    $channel = PayChannel::where('id', $act_order->cid)->find();
+                    if ($channel && preg_match('/^alibill\d+#/i', $channel->channel)) {
+                        $this->autoCheckAlibill($act_order);
+                        $act_order = Order::where('order_id', $order_id)->find();
+                    }
+                }
                 $passtime = strtotime($act_order->close_time) - time();
                 $data = [];
                 if ($act_order->state === 0) {
@@ -238,6 +246,41 @@ class PayController
             return ['order' => $order->order_id, 'code' => 0, 'msg' => 'notify fail: ' . $preview];
         }
     }
+    // 支付宝账单模式自动查单（前端轮询触发，无需cron）
+    private function autoCheckAlibill(Order $order): void
+    {
+        $cacheKey = 'alibill_check_' . $order->order_id;
+        if (cache($cacheKey)) return;
+        cache($cacheKey, time(), 30);
+
+        try {
+            $client = new \alipay\AlipayClient();
+            if (!$client->validateConfig()) return;
+
+            $billQuery = new \alipay\BillQuery($client);
+            $config = $client->getConfig();
+            $minutesBack = $config['bill_query']['query_minutes_back'] ?? 30;
+
+            $oldTz = date_default_timezone_get();
+            date_default_timezone_set('Asia/Shanghai');
+            $endTime = date('Y-m-d H:i:s');
+            $startTime = date('Y-m-d H:i:s', strtotime("-{$minutesBack} minutes"));
+            date_default_timezone_set($oldTz);
+
+            $result = $billQuery->queryBills($startTime, $endTime, 1, 200);
+            $bills = $billQuery->extractBills($result);
+
+            foreach ($bills as $bill) {
+                if ((string)$bill['amount'] === (string)$order->really_price) {
+                    $this->updateOrderState($order, $bill['trade_no']);
+                    return;
+                }
+            }
+        } catch (\Exception $e) {
+            // 静默失败，下次轮询重试
+        }
+    }
+
     // [定时任务]获取收款明细，提交收款通知
     public function checkPayResult(Request $request)
     {
