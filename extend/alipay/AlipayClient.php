@@ -146,6 +146,7 @@ class AlipayClient
             throw new \RuntimeException('支付宝API请求失败');
         }
 
+        $response = $this->normalizeResponse($response);
         $result = json_decode($response, true);
         if (!$result) {
             throw new \RuntimeException('支付宝API响应解析失败: ' . mb_substr(trim((string)$response), 0, 500));
@@ -175,6 +176,19 @@ class AlipayClient
             }
         }
         return implode('&', $parts);
+    }
+
+    private function normalizeResponse(string $response): string
+    {
+        $response = trim($response);
+        $response = preg_replace('/^\xEF\xBB\xBF/', '', $response) ?? $response;
+        if (function_exists('mb_check_encoding') && !mb_check_encoding($response, 'UTF-8')) {
+            $converted = mb_convert_encoding($response, 'UTF-8', 'GBK,GB2312,UTF-8');
+            if (is_string($converted) && $converted !== '') {
+                return $converted;
+            }
+        }
+        return $response;
     }
 
     /**
