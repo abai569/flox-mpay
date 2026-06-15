@@ -477,6 +477,7 @@ setup_caddy() {
     local keyring_path="/usr/share/keyrings/caddy-stable-archive-keyring.gpg"
 
     # 尝试方法1：Cloudflare 官方 GPG key
+    $SUDO_CMD rm -f "$keyring_path" 2>/dev/null
     if curl -1sLf 'https://dl.cloudflare.com/cloudflare-main.gpg' 2>/dev/null | $SUDO_CMD gpg --dearmor -o "$keyring_path" 2>/dev/null; then
       if [[ -s "$keyring_path" ]]; then
         gpg_ok=1
@@ -487,6 +488,7 @@ setup_caddy() {
     # 尝试方法2：备用 GPG key URL
     if [[ $gpg_ok -eq 0 ]]; then
       echo "[WARN] 方法1失败，尝试备用方式..."
+      $SUDO_CMD rm -f "$keyring_path" 2>/dev/null
       if curl -1sLf 'https://dl.cloudflare.com/caddy-stable.gpg' 2>/dev/null | $SUDO_CMD gpg --dearmor -o "$keyring_path" 2>/dev/null; then
         if [[ -s "$keyring_path" ]]; then
           gpg_ok=1
@@ -499,6 +501,7 @@ setup_caddy() {
     if [[ $gpg_ok -eq 0 ]]; then
       echo "[WARN] 方法2失败，尝试直接下载 key..."
       if curl -fsSL -o /tmp/caddy-key.gpg 'https://dl.cloudflare.com/caddy-stable.gpg' 2>/dev/null; then
+        $SUDO_CMD rm -f "$keyring_path" 2>/dev/null
         $SUDO_CMD cp /tmp/caddy-key.gpg "$keyring_path"
         rm -f /tmp/caddy-key.gpg
         if [[ -s "$keyring_path" ]]; then
