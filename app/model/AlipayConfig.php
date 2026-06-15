@@ -24,17 +24,17 @@ class AlipayConfig extends Model
         $prefix = $db->getConfig('prefix');
         $table = $prefix . 'alipay_config';
 
-        $db->execute("CREATE TABLE IF NOT EXISTS `$table` (
-            `id` INTEGER PRIMARY KEY DEFAULT 1,
-            `app_id` VARCHAR(255) NOT NULL DEFAULT '',
-            `private_key` TEXT NOT NULL DEFAULT '',
-            `alipay_public_key` TEXT NOT NULL DEFAULT '',
-            `transfer_user_id` VARCHAR(255) NOT NULL DEFAULT '',
-            `query_minutes_back` INTEGER NOT NULL DEFAULT 30
-        )");
         try {
-            $db->execute("INSERT INTO `$table` (`id`) VALUES (1)");
-        } catch (\Exception $e) {
+            $db->execute("CREATE TABLE IF NOT EXISTS `$table` (
+                id INTEGER PRIMARY KEY,
+                app_id TEXT NOT NULL DEFAULT '',
+                private_key TEXT NOT NULL DEFAULT '',
+                alipay_public_key TEXT NOT NULL DEFAULT '',
+                transfer_user_id TEXT NOT NULL DEFAULT '',
+                query_minutes_back INTEGER NOT NULL DEFAULT 30
+            )");
+            $db->execute("INSERT INTO `$table` (id) VALUES (1)");
+        } catch (\Throwable $e) {
         }
     }
 
