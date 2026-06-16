@@ -284,6 +284,9 @@ update_mpay() {
 
   backup_data
 
+  echo "[INFO] 更新 docker-compose.yml 镜像标签..."
+  sed -i "s|^\(\s*image:\s*\).*|\1${IMAGE}|" docker-compose.yml
+
   echo "[INFO] 拉取最新 Docker 镜像..."
   docker pull "$IMAGE"
 

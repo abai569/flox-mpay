@@ -11,9 +11,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Write VERSION file
-        run: echo "V1-${GITHUB_REF_NAME#v}" > VERSION
-
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
@@ -45,5 +42,7 @@ jobs:
           push: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          build-args: |
+            APP_VERSION=${{ github.ref_name }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

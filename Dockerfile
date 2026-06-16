@@ -44,6 +44,9 @@ COPY docker/nginx.conf /etc/nginx/sites-enabled/default
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY docker/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
+ARG APP_VERSION=unknown
+RUN echo "V1-${APP_VERSION#v}" > /var/www/html/VERSION
+
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh \
     && mkdir -p /var/www/html/runtime \
     && chown -R www-data:www-data /var/www/html \
