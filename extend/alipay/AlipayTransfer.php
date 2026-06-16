@@ -31,7 +31,6 @@ class AlipayTransfer
             'goBack'     => 'NO',
             'amount'     => number_format($amount, 2, '.', ''),
             'userId'     => $userId,
-            'memo'       => $memo,
         ];
 
         return 'alipays://platformapi/startapp?' . http_build_query($params);
