@@ -83,7 +83,7 @@ class PayController
                     if (preg_match('/^alibill\d+#/i', $channel->channel)) {
                         try {
                             $transfer = new \alipay\AlipayTransfer();
-                            $appUrl = $transfer->generateTransferLink();
+                            $appUrl = $transfer->generateTransferLink($act_order->order_id, (float)$act_order->really_price);
                             View::assign('alipayAppUrl', $appUrl);
                         } catch (\Exception $e) {
                             View::assign('alipayAppUrl', '');
