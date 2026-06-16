@@ -237,10 +237,10 @@
         .action-btn {
             display: block;
             width: 100%;
-            padding: 15px;
+            padding: 12px 10px;
             border: none;
-            border-radius: 12px;
-            font-size: 16px;
+            border-radius: 10px;
+            font-size: 13px;
             font-weight: 600;
             color: #fff;
             text-align: center;
@@ -333,7 +333,7 @@
                 <div id="appBtnWrap" style="display: none; padding: 0 4px;">
                     <div class="action-row">
                         <a id="openApp" class="action-btn" href="#">打开支付应用</a>
-                        <a id="checkStateBtn" class="action-btn secondary" href="#">已支付查询订单状态</a>
+                        <a id="checkStateBtn" class="action-btn secondary" href="#">查询订单状态</a>
                     </div>
                 </div>
 
@@ -528,7 +528,7 @@
                 checkStateBtn.style.display = 'block';
                 openAppBtn.classList.add('alipay');
                 if (alipayAppUrl) {
-                    openAppBtn.innerText = '打开支付宝APP付款';
+                    openAppBtn.innerText = '打开支付宝付款';
                     openAppBtn.href = alipayAppUrl;
                 } else {
                     openAppBtn.innerText = '打开支付宝付款';
