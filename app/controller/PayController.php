@@ -79,19 +79,17 @@ class PayController
                     View::assign('payUrl', $payurl['data'] ?? $payurl['msg']);
                 } else {
                     View::assign('payUrl', $channel->qrcode);
-                    // 支付宝账单模式：生成APP唤起链接
+                    // 支付宝账单模式：生成APP唤起链接（加 _t 时间戳避免支付宝内部缓存）
                     if (preg_match('/^alibill\d+#/i', $channel->channel)) {
                         try {
                             $transfer = new \alipay\AlipayTransfer();
-                            $amount = (float)$act_order->really_price;
-                            $memo = $act_order->order_id;
-                            $appUrl = $transfer->generateTransferLink($amount, $memo);
-                            $intentUrl = $transfer->generateIntentUrl($amount, $memo);
+                            $appUrl = $transfer->generateTransferLink(
+                                (float)$act_order->really_price,
+                                $act_order->order_id
+                            );
                             View::assign('alipayAppUrl', $appUrl);
-                            View::assign('alipayIntentUrl', $intentUrl);
                         } catch (\Exception $e) {
                             View::assign('alipayAppUrl', '');
-                            View::assign('alipayIntentUrl', '');
                         }
                     }
                 }
