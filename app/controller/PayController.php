@@ -79,13 +79,18 @@ class PayController
                     View::assign('payUrl', $payurl['data'] ?? $payurl['msg']);
                 } else {
                     View::assign('payUrl', $channel->qrcode);
-                    // 支付宝账单模式：生成APP唤起链接
+                    // 支付宝账单模式：生成安全收银台 URL（alipay.trade.wap.pay）
                     if (preg_match('/^alibill\d+#/i', $channel->channel)) {
                         try {
-                            $transfer = new \alipay\AlipayTransfer();
-                            $appUrl = $transfer->generateTransferLink(
+                            $client = new \alipay\AlipayClient();
+                            $pagePay = new \alipay\PagePay($client);
+                            $orderUrl = request()->domain() . '/Pay/console/' . $act_order->order_id;
+                            $appUrl = $pagePay->generatePayUrl(
+                                $act_order->order_id,
                                 (float)$act_order->really_price,
-                                $act_order->order_id
+                                $act_order->name ?: '商品支付',
+                                $orderUrl,
+                                $orderUrl
                             );
                             View::assign('alipayAppUrl', $appUrl);
                         } catch (\Exception $e) {
