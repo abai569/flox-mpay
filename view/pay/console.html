@@ -518,29 +518,22 @@
             triggerCheck();
         });
 
-        openAppBtn.addEventListener('click', function (e) {
-            e.preventDefault();
-            if (this.dataset.url) {
-                window.location.href = this.dataset.url;
-            }
-        });
-
         if (environment === 'phone') {
             document.getElementById('appBtnWrap').style.display = 'block';
             if (payType === 'wxpay') {
                 openAppBtn.innerText = '打开微信支付';
                 openAppBtn.classList.add('wxpay');
-                openAppBtn.dataset.url = 'weixin://';
+                openAppBtn.href = 'weixin://';
             } else if (payType === 'alipay') {
                 checkStateBtn.style.display = 'block';
                 openAppBtn.classList.add('alipay');
                 openAppBtn.innerText = '打开支付宝付款';
                 if (alipayAppUrl) {
-                    openAppBtn.dataset.url = alipayAppUrl;
+                    openAppBtn.href = alipayAppUrl;
                 } else if (codeType == 0) {
-                    openAppBtn.dataset.url = 'alipays://platformapi/startapp?appId=20000067&&url=' + encodeURIComponent(payCode);
+                    openAppBtn.href = 'alipays://platformapi/startapp?appId=20000067&&url=' + encodeURIComponent(payCode);
                 } else {
-                    openAppBtn.dataset.url = 'alipays://platformapi/startapp?appId=20000067&&url=' + encodeURIComponent(window.location.href);
+                    openAppBtn.href = 'alipays://platformapi/startapp?appId=20000067&&url=' + encodeURIComponent(window.location.href);
                 }
             }
         } else if (payType === 'alipay' && alipayAppUrl) {

@@ -31,7 +31,6 @@ class AlipayTransfer
             'goBack'     => 'NO',
             'amount'     => number_format($amount, 2, '.', ''),
             'userId'     => $userId,
-            '_t'         => (string)time(),
         ];
 
         return 'alipays://platformapi/startapp?' . http_build_query($params);
