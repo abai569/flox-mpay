@@ -13,12 +13,11 @@ class AlipayTransfer
 
     /**
      * 生成防风控转账链接（alipays:// 协议唤起支付宝APP）
+     * 不传金额、不传备注，由用户手动填写，避免支付宝风控拦截
      *
-     * @param float  $amount  转账金额
-     * @param string $memo    转账备注（订单号）
      * @return string alipays:// 链接
      */
-    public function generateTransferLink(float $amount, string $memo): string
+    public function generateTransferLink(float $amount = 0): string
     {
         $userId = $this->config['transfer_user_id'] ?? '';
         if (empty($userId)) {
@@ -29,7 +28,6 @@ class AlipayTransfer
             'appId'      => '20000116',
             'actionType' => 'toAccount',
             'goBack'     => 'NO',
-            'amount'     => number_format($amount, 2, '.', ''),
             'userId'     => $userId,
         ];
 
