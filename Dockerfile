@@ -33,16 +33,19 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-COPY . .
-
-RUN composer install --no-dev --no-interaction --optimize-autoloader \
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-interaction --optimize-autoloader --no-scripts \
     && composer clear-cache
+
+COPY . .
+RUN composer dump-autoload --optimize
 
 COPY docker/nginx.conf /etc/nginx/sites-enabled/default
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY docker/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh \
+    && mkdir -p /var/www/html/runtime \
     && chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html/runtime
 
