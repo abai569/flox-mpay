@@ -759,6 +759,11 @@ main() {
     exit $?
   fi
 
+  if [[ "$1" == "update" ]]; then
+    update_mpay
+    exit $?
+  fi
+
   while true; do
     show_menu
     read -p "请选择操作 (1-7): " choice
