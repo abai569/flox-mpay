@@ -17,7 +17,7 @@ class AlipayTransfer
      *
      * @return string https:// 链接（浏览器不触发 scheme 缓存）
      */
-    public function generateTransferLink(string $nonce = '', float $amount = 0): string
+    public function generateTransferLink(string $nonce = ''): string
     {
         $userId = $this->config['transfer_user_id'] ?? '';
         if (empty($userId)) {
@@ -28,17 +28,14 @@ class AlipayTransfer
             $nonce = time() . random_int(100000, 999999);
         }
 
-        // 第5层：内部转账页（alipays:// 由 render.alipay.com 中转，防风控）
+        // 第5层：内部转账页（不传金额，避免风控）
         $innerParams = [
             'appId'      => '20000116',
             'actionType' => 'toAccount',
             'goBack'     => 'NO',
             'userId'     => $userId,
+            '_t'         => $nonce,
         ];
-        if ($amount > 0) {
-            $innerParams['amount'] = number_format($amount, 2, '.', '');
-        }
-        $innerParams['_t'] = $nonce;
         $innerUrl = 'alipays://platformapi/startapp?' . http_build_query($innerParams);
 
         // 第4层 -> 第3层 -> 第2层 -> 第1层：逐层 HTTPS 包装

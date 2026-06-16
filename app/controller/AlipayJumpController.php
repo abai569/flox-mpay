@@ -15,17 +15,9 @@ class AlipayJumpController
         $orderId = request()->get('order_id', '');
         $nonce = $orderId . random_int(100000, 999999);
 
-        $amount = 0;
-        if ($orderId) {
-            $order = \app\model\Order::where('order_id', $orderId)->find();
-            if ($order) {
-                $amount = (float)$order->really_price;
-            }
-        }
-
         try {
             $transfer = new \alipay\AlipayTransfer();
-            $appUrl = $transfer->generateTransferLink($nonce, $amount);
+            $appUrl = $transfer->generateTransferLink($nonce);
         } catch (\Exception $e) {
             return Response::create('支付宝配置错误，请联系管理员', 'html', 500);
         }
