@@ -6,7 +6,9 @@ export LC_ALL=C
 
 REPO="abai569/flox-mpay"
 INSTALL_DIR="/opt/mpay"
-IMAGE="ghcr.io/abai569/flox-mpay:latest"
+IMAGE_BASE="ghcr.io/abai569/flox-mpay"
+VERSION_TAG="latest"
+IMAGE="${IMAGE_BASE}:${VERSION_TAG}"
 DEFAULT_MPAY_PORT=8088
 
 install_download_tools() {
@@ -575,6 +577,165 @@ configure_caddy_interactive() {
   setup_caddy "$domain" "$port"
 }
 
+run_version() {
+  local version="$1"
+
+  if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    echo "[ERROR] 无效的版本号格式：$version（期望格式如 1.6.1）"
+    exit 1
+  fi
+
+  VERSION_TAG="$version"
+  IMAGE="${IMAGE_BASE}:${VERSION_TAG}"
+
+  echo "[INFO] 指定版本：$VERSION_TAG"
+  echo "[INFO] 镜像地址：$IMAGE"
+
+  check_docker
+
+  if [[ -d "$INSTALL_DIR" && -f "$INSTALL_DIR/docker-compose.yml" ]]; then
+    echo "[INFO] 检测到已有安装，执行版本切换..."
+    run_version_update
+  else
+    echo "[INFO] 未检测到已有安装，执行全新安装..."
+    run_version_install
+  fi
+}
+
+run_version_install() {
+  echo "[INFO] 开始安装 mpay $VERSION_TAG ..."
+  echo "[INFO] 创建安装目录：$INSTALL_DIR"
+  $SUDO_CMD mkdir -p "$INSTALL_DIR"
+  cd "$INSTALL_DIR"
+
+  echo ""
+  echo "[INFO] 写入环境配置..."
+  cat > .env <<ENVEOF
+MPAY_PORT=${DEFAULT_MPAY_PORT}
+ENVEOF
+
+  echo ""
+  echo "[INFO] 拉取 Docker 镜像 $IMAGE ..."
+  docker pull "$IMAGE"
+
+  cat > docker-compose.yml <<EOF
+version: "3.8"
+
+services:
+  mpay:
+    image: $IMAGE
+    container_name: mpay-app
+    restart: unless-stopped
+    environment:
+      APP_DEBUG: false
+      DB_TYPE: sqlite
+      DB_NAME: /var/www/html/database/mpay.db
+      DB_PREFIX: mpay_
+      DEFAULT_LANG: zh-cn
+    ports:
+      - "\${MPAY_PORT:-8088}:80"
+    volumes:
+      - mpay_data:/var/www/html/database
+      - mpay_runtime:/var/www/html/runtime
+
+volumes:
+  mpay_data:
+  mpay_runtime:
+EOF
+
+  echo "[INFO] 启动 mpay 服务..."
+  $DOCKER_CMD up -d
+
+  local public_ip=$(get_public_ipv4)
+  public_ip=${public_ip:-"服务器IP"}
+
+  wait_and_show_result "$public_ip" "${DEFAULT_MPAY_PORT}"
+}
+
+run_version_update() {
+  cd "$INSTALL_DIR"
+
+  local old_image
+  old_image=$(grep -m1 '^\s*image:' docker-compose.yml 2>/dev/null | awk '{print $2}')
+  echo "[INFO] 当前镜像：${old_image:-未知}"
+  echo "[INFO] 目标镜像：$IMAGE"
+
+  echo "[INFO] 备份数据..."
+  local backup_dir="${INSTALL_DIR}/backup_$(date +%Y%m%d_%H%M%S)"
+  mkdir -p "$backup_dir"
+  if [[ -f ".env" ]]; then
+    cp .env "$backup_dir/.env"
+  fi
+  if docker ps --format "{{.Names}}" | grep -q "^mpay-app$"; then
+    docker cp mpay-app:/var/www/html/database/mpay.db "$backup_dir/mpay.db" 2>/dev/null && echo "  mpay.db 已备份" || echo "  数据库文件备份跳过"
+  else
+    docker run --rm -v mpay_data:/data -v "$backup_dir":/backup alpine sh -c "cp /data/mpay.db /backup/mpay.db 2>/dev/null" && echo "  mpay.db 已从卷备份" || echo "  数据库文件备份跳过"
+  fi
+
+  echo ""
+  echo "[INFO] 拉取 Docker 镜像 $IMAGE ..."
+  docker pull "$IMAGE"
+
+  sed -i "s|^\(\s*image:\s*\).*|\1${IMAGE}|" docker-compose.yml
+  echo "[INFO] 已更新 docker-compose.yml 中的镜像版本"
+
+  echo "[INFO] 重启服务（数据卷保持不变）..."
+  $DOCKER_CMD up -d --force-recreate
+
+  local public_ip=$(get_public_ipv4)
+  public_ip=${public_ip:-"服务器IP"}
+
+  local port=${DEFAULT_MPAY_PORT}
+  if [[ -f ".env" ]]; then
+    local env_port
+    env_port=$(grep -m1 "^MPAY_PORT=" .env 2>/dev/null | cut -d= -f2)
+    if [[ -n "$env_port" ]]; then
+      port="$env_port"
+    fi
+  fi
+
+  wait_and_show_result "$public_ip" "$port"
+}
+
+wait_and_show_result() {
+  local public_ip="$1"
+  local port="$2"
+
+  echo ""
+  echo "⏳ 等待服务启动..."
+  local elapsed=0
+  while [ $elapsed -lt 30 ]; do
+    local logs
+    logs=$(docker logs mpay-app 2>&1)
+    if echo "$logs" | grep -q "INIT_DONE"; then
+      break
+    fi
+    if echo "$logs" | grep -q "INIT_ERROR"; then
+      echo "[ERROR] 容器初始化失败"
+      docker logs mpay-app --tail 10
+      break
+    fi
+    sleep 1; elapsed=$((elapsed + 1))
+  done
+
+  local init_passwd=$(docker logs mpay-app 2>&1 | grep "^INIT_PASSWORD=" | tail -1 | cut -d= -f2)
+
+  echo ""
+  echo "==============================================="
+  echo "   [OK] mpay $VERSION_TAG 部署完成！"
+  echo "==============================================="
+  echo "   访问地址：http://${public_ip}:${port}"
+  echo "   用户名：admin"
+  if [[ -n "$init_passwd" ]]; then
+    echo "   密码：${init_passwd}"
+    echo "   [WARN] 安全起见，首次登录后请修改密码！"
+  else
+    echo "[INFO] 未检测到自动初始化密码，请检查日志"
+    docker logs mpay-app --tail 10
+  fi
+  echo "==============================================="
+}
+
 main() {
   if [[ $EUID -ne 0 ]]; then
     SUDO_CMD="sudo"
@@ -584,6 +745,11 @@ main() {
   fi
 
   install_download_tools
+
+  if [[ "$1" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    run_version "$1"
+    exit $?
+  fi
 
   if [[ "$1" == "uninstall" ]]; then
     uninstall_mpay "true"
@@ -601,23 +767,23 @@ main() {
         ;;
       2)
         update_mpay
-        echo ""
+        exit 0
         ;;
       3)
         uninstall_mpay
-        echo ""
+        exit 0
         ;;
       4)
         backup_data
-        echo ""
+        exit 0
         ;;
       5)
         restore_data
-        echo ""
+        exit 0
         ;;
       6)
         configure_caddy_interactive
-        echo ""
+        exit 0
         ;;
       7)
         echo "[INFO] 退出脚本"
