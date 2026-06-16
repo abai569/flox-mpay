@@ -20,6 +20,8 @@ Route::rule('checkPayResult', 'Pay/checkPayResult');
 Route::rule('mpayNotify', 'Pay/mpayNotify');
 // 验证支付结果
 Route::rule('validatePayResult', 'Pay/validatePayResult');
+// 支付宝唤起跳转（302 重定向到 alipays://，绕过浏览器 scheme 缓存）
+Route::rule('alipayJump', 'AlipayJump/jump');
 
 // API多级控制器
 Route::rule('api/:controller/:method', 'api.:controller/:method');

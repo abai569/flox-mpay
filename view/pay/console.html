@@ -529,7 +529,7 @@
                 openAppBtn.classList.add('alipay');
                 openAppBtn.innerText = '打开支付宝付款';
                 if (alipayAppUrl) {
-                    openAppBtn.href = alipayAppUrl;
+                    openAppBtn.href = '/alipayJump?_t=' + Date.now();
                 } else if (codeType == 0) {
                     openAppBtn.href = 'alipays://platformapi/startapp?appId=20000067&&url=' + encodeURIComponent(payCode);
                 } else {
