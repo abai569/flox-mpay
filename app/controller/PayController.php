@@ -83,13 +83,15 @@ class PayController
                     if (preg_match('/^alibill\d+#/i', $channel->channel)) {
                         try {
                             $transfer = new \alipay\AlipayTransfer();
-                            $appUrl = $transfer->generateTransferLink(
-                                (float)$act_order->really_price,
-                                $act_order->order_id
-                            );
+                            $amount = (float)$act_order->really_price;
+                            $memo = $act_order->order_id;
+                            $appUrl = $transfer->generateTransferLink($amount, $memo);
+                            $intentUrl = $transfer->generateIntentUrl($amount, $memo);
                             View::assign('alipayAppUrl', $appUrl);
+                            View::assign('alipayIntentUrl', $intentUrl);
                         } catch (\Exception $e) {
                             View::assign('alipayAppUrl', '');
+                            View::assign('alipayIntentUrl', '');
                         }
                     }
                 }

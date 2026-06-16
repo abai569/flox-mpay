@@ -35,4 +35,14 @@ class AlipayTransfer
 
         return 'alipays://platformapi/startapp?' . http_build_query($params);
     }
+
+    /**
+     * 生成 Android intent:// 唤起链接，绕过系统 scheme 缓存
+     */
+    public function generateIntentUrl(float $amount, string $memo): string
+    {
+        $alipaysUrl = $this->generateTransferLink($amount, $memo);
+        $intentUrl = preg_replace('/^alipays:/', 'intent:', $alipaysUrl);
+        return $intentUrl . '#Intent;scheme=alipays;package=com.eg.android.AlipayGphone;end;';
+    }
 }

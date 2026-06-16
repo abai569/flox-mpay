@@ -389,6 +389,7 @@
         const payType = '<?php echo htmlentities($type); ?>';
         const order = '<?php echo htmlentities($order_id); ?>';
         const alipayAppUrl = '<?php echo $alipayAppUrl ?? ""; ?>';
+        const alipayIntentUrl = '<?php echo $alipayIntentUrl ?? ""; ?>';
         const QR = AwesomeQR.AwesomeQR;
         let orderTimer = 0;
 
@@ -536,7 +537,8 @@
                 openAppBtn.classList.add('alipay');
                 openAppBtn.innerText = '打开支付宝付款';
                 if (alipayAppUrl) {
-                    openAppBtn.dataset.url = alipayAppUrl;
+                    const isAndroid = navigator.userAgent.toLowerCase().includes('android');
+                    openAppBtn.dataset.url = isAndroid && alipayIntentUrl ? alipayIntentUrl : alipayAppUrl;
                 } else if (codeType == 0) {
                     openAppBtn.dataset.url = 'alipays://platformapi/startapp?appId=20000067&&url=' + encodeURIComponent(payCode);
                 } else {
