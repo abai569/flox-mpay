@@ -19,7 +19,7 @@ bash <(curl -L https://raw.githubusercontent.com/abai569/flox-mpay/main/install.
 安装指定版本：
 
 ```bash
-bash <(curl -L https://raw.githubusercontent.com/abai569/flox-mpay/main/install.sh) 1.8.5
+bash <(curl -L https://raw.githubusercontent.com/abai569/flox-mpay/main/install.sh) 1.8.6
 ```
 
 卸载：
@@ -48,6 +48,7 @@ Docker 环境，脚本自动检测并安装。支持 Debian/Ubuntu/CentOS。
 
 | 版本 | 主要内容 |
 |------|---------|
+| v1.8.6 | 修复微信监控成功回调被重复重试，更新时保留登录状态 |
 | v1.8.5 | 订单列表支持批量手动补单 |
 | v1.8.4 | 订单列表区分自动支付与手动补单，补单显示补单时间 |
 | v1.8.3 | 发布当前源码构建，延续支付宝账单唤起优化 |
