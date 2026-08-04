@@ -206,7 +206,7 @@ class OrderController extends BaseController
             'out_trade_no' => $param->out_trade_no,
             'type' => $param->type,
             'name' => $param->name,
-            'money' => $param->money,
+            'money' => $param->really_price,
             'trade_status' => 'TRADE_SUCCESS',
             'sign_type' => 'MD5',
         ];
